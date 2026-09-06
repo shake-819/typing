@@ -13,6 +13,7 @@ const state = {
 const els = {
   difficultyButtons: document.querySelectorAll(".difficulty-btn"),
   kanaLine: document.getElementById("kana-line"),
+  displayLine: document.getElementById("display-line"),
   romajiLine: document.getElementById("romaji-line"),
   progressLabel: document.getElementById("progress-label"),
   speedOut: document.getElementById("speed-out"),
@@ -141,8 +142,9 @@ function nextItem() {
     finishRound();
     return;
   }
-  const kana = state.queue.shift();
-  state.engine = new TypingEngine(kana);
+  const item = state.queue.shift();
+  state.engine = new TypingEngine(item.kana);
+  els.displayLine.textContent = item.display;
   els.progressLabel.textContent = `${state.roundStats.itemsDone + 1} / ${ITEMS_PER_ROUND}問目`;
   renderKanaLine();
 }
@@ -171,6 +173,7 @@ function finishRound() {
   const speed = elapsed > 0 ? (state.roundStats.correct / elapsed).toFixed(1) : "0.0";
   els.kanaLine.innerHTML = "";
   els.romajiLine.innerHTML = "";
+  els.displayLine.textContent = "";
   els.progressLabel.textContent = "完了";
   keyboard.highlightExpected([]);
   els.resultPanel.style.display = "block";
