@@ -1,0 +1,249 @@
+:root {
+  --bg: #f5f5f3;
+  --surface: #ffffff;
+  --surface-muted: #eeeeec;
+  --border: #dcdcd8;
+  --text-primary: #222220;
+  --text-secondary: #6b6b67;
+  --text-muted: #a3a39d;
+  --accent: #2f6fed;
+  --accent-bg: #e8f0ff;
+  --success: #1d9e75;
+  --success-bg: #e1f5ee;
+  --danger: #d64545;
+  --danger-bg: #fce9e9;
+  --radius: 10px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+}
+
+.app {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+}
+
+.app-header { text-align: center; margin-bottom: 1.5rem; }
+.app-header h1 { font-size: 24px; font-weight: 600; margin: 0 0 4px; }
+.subtitle { color: var(--text-secondary); font-size: 14px; margin: 0; }
+
+.difficulty-bar {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.difficulty-btn {
+  padding: 8px 20px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.difficulty-btn:hover { border-color: var(--accent); }
+.difficulty-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 500;
+}
+
+.practice-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.75rem 1.5rem;
+}
+
+.progress-label {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0 0 1rem;
+}
+
+.kana-line {
+  text-align: center;
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  margin-bottom: 0.5rem;
+  min-height: 42px;
+}
+
+.kana-done { color: var(--success); }
+.kana-current { color: var(--text-primary); border-bottom: 3px solid var(--accent); }
+.kana-pending { color: var(--text-muted); }
+
+.romaji-line {
+  text-align: center;
+  font-family: "SF Mono", "Menlo", monospace;
+  font-size: 20px;
+  letter-spacing: 1px;
+  margin-bottom: 1rem;
+  min-height: 28px;
+}
+
+.romaji-done { color: var(--success); }
+.romaji-pending { color: var(--text-muted); }
+
+.focus-hint {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.result-panel {
+  text-align: center;
+  background: var(--success-bg);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.result-panel p { margin: 0 0 10px; color: var(--success); font-weight: 500; }
+
+.primary-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 8px 20px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.ghost-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 14px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.ghost-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 1.5rem;
+}
+
+.stat-box {
+  background: var(--surface-muted);
+  border-radius: var(--radius);
+  padding: 12px 8px;
+  text-align: center;
+}
+
+.stat-label { font-size: 12px; color: var(--text-secondary); margin: 0 0 4px; }
+.stat-value { font-size: 20px; font-weight: 600; margin: 0; }
+.unit-label { font-size: 11px; font-weight: 400; color: var(--text-secondary); }
+
+.keyboard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+.kb-row { display: flex; gap: 6px; }
+
+.kb-key {
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  transition: all 0.1s ease;
+}
+
+.kb-key-expected {
+  background: var(--accent-bg);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.kb-key-miss {
+  background: var(--danger-bg);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.weak-key-panel {
+  margin-top: 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+}
+
+.weak-key-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.weak-key-header h2 { font-size: 16px; font-weight: 600; margin: 0; }
+
+.weak-key-row {
+  display: grid;
+  grid-template-columns: 28px 1fr 110px;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.weak-key-label {
+  font-weight: 600;
+  text-align: center;
+  color: var(--text-primary);
+}
+
+.weak-key-bar-track {
+  height: 8px;
+  background: var(--surface-muted);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.weak-key-bar-fill {
+  height: 100%;
+  background: var(--danger);
+  border-radius: 999px;
+}
+
+.weak-key-count { color: var(--text-secondary); text-align: right; }
+
+.muted-text { color: var(--text-muted); font-size: 13px; margin: 0; }
+
+@media (max-width: 480px) {
+  .kb-key { width: 26px; height: 30px; font-size: 11px; }
+  .kana-line { font-size: 24px; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}

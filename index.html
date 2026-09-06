@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>タイピング練習(ローマ字入力・変換なし)</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <h1>タイピング練習</h1>
+      <p class="subtitle">漢字変換なし・ローマ字直接入力</p>
+    </header>
+
+    <div class="difficulty-bar">
+      <button class="difficulty-btn active" data-difficulty="easy">易しい</button>
+      <button class="difficulty-btn" data-difficulty="normal">ふつう</button>
+      <button class="difficulty-btn" data-difficulty="hard">難しい</button>
+    </div>
+
+    <main class="practice-card">
+      <p class="progress-label" id="progress-label">1 / 5問目</p>
+
+      <div class="kana-line" id="kana-line"></div>
+      <div class="romaji-line" id="romaji-line"></div>
+
+      <p class="focus-hint" id="focus-hint">キーボードで入力を開始してください</p>
+
+      <div class="result-panel" id="result-panel" style="display:none;">
+        <p id="result-text"></p>
+        <button id="restart-btn" class="primary-btn">もう一度</button>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-box">
+          <p class="stat-label">速度</p>
+          <p class="stat-value" id="speed-out">0.0<span class="unit-label"> 打/秒</span></p>
+        </div>
+        <div class="stat-box">
+          <p class="stat-label">経過時間</p>
+          <p class="stat-value" id="time-out">0.0<span class="unit-label"> 秒</span></p>
+        </div>
+        <div class="stat-box">
+          <p class="stat-label">ミス数</p>
+          <p class="stat-value" id="miss-out">0</p>
+        </div>
+        <div class="stat-box">
+          <p class="stat-label">正確率</p>
+          <p class="stat-value" id="accuracy-out">100<span class="unit-label">%</span></p>
+        </div>
+      </div>
+
+      <div class="keyboard" id="keyboard"></div>
+    </main>
+
+    <section class="weak-key-panel">
+      <div class="weak-key-header">
+        <h2>苦手なキー</h2>
+        <button id="reset-stats-btn" class="ghost-btn">記録をリセット</button>
+      </div>
+      <div id="weak-key-list"></div>
+    </section>
+  </div>
+
+  <script src="js/kana-table.js"></script>
+  <script src="js/sentences.js"></script>
+  <script src="js/typing-engine.js"></script>
+  <script src="js/keyboard.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
