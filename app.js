@@ -174,7 +174,7 @@ function handleKeydown(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
 
   const key = e.key;
-  if (!/^[a-zA-Z\-']$/.test(key)) return;
+  if (!/^[a-zA-Z!?\-']$/.test(key)) return;
   e.preventDefault();
 
   if (!state.startTime) {
