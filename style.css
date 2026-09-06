@@ -94,9 +94,12 @@ body {
   letter-spacing: 1px;
   margin-bottom: 1rem;
   min-height: 28px;
+  word-break: break-all;
+  line-height: 1.6;
 }
 
 .romaji-done { color: var(--success); }
+.romaji-current { color: var(--text-primary); font-weight: 600; }
 .romaji-pending { color: var(--text-muted); }
 
 .focus-hint {
