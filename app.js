@@ -100,12 +100,21 @@ function renderKanaLine() {
     els.kanaLine.appendChild(span);
   });
 
-  const pattern = engine.displayPatternForCurrentUnit();
-  const typedLen = engine.typedBuffer.length;
   let html = "";
-  for (let i = 0; i < pattern.length; i++) {
-    html += `<span class="${i < typedLen ? "romaji-done" : "romaji-pending"}">${pattern[i]}</span>`;
-  }
+  engine.units.forEach((unit, idx) => {
+    if (idx < engine.currentUnitIndex) {
+      const pattern = unit.patterns[0];
+      html += `<span class="romaji-done">${pattern}</span>`;
+    } else if (idx === engine.currentUnitIndex) {
+      const pattern = engine.displayPatternForCurrentUnit();
+      const typedLen = engine.typedBuffer.length;
+      for (let i = 0; i < pattern.length; i++) {
+        html += `<span class="${i < typedLen ? "romaji-done" : "romaji-current"}">${pattern[i]}</span>`;
+      }
+    } else {
+      html += `<span class="romaji-pending">${unit.patterns[0]}</span>`;
+    }
+  });
   els.romajiLine.innerHTML = html;
 
   keyboard.highlightExpected(engine.nextExpectedKeys());
