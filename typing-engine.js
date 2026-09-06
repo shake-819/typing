@@ -88,7 +88,7 @@ class TypingEngine {
   // 1キー入力を処理する。戻り値: "progress" | "unit-complete" | "miss" | "ignored"
   handleKey(rawKey) {
     const key = rawKey.toLowerCase();
-    if (!/^[a-z\-']$/.test(key)) return { result: "ignored" };
+    if (!/^[a-z!?\-']$/.test(key)) return { result: "ignored" };
     if (this.isDone) return { result: "ignored" };
 
     const unit = this.currentUnit;
