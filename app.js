@@ -12,7 +12,6 @@ const state = {
 
 const els = {
   difficultyButtons: document.querySelectorAll(".difficulty-btn"),
-  kanaLine: document.getElementById("kana-line"),
   displayLine: document.getElementById("display-line"),
   romajiLine: document.getElementById("romaji-line"),
   progressLabel: document.getElementById("progress-label"),
@@ -91,15 +90,6 @@ function renderWeakKeys() {
 
 function renderKanaLine() {
   const engine = state.engine;
-  els.kanaLine.innerHTML = "";
-  engine.units.forEach((unit, idx) => {
-    const span = document.createElement("span");
-    span.textContent = unit.display;
-    if (idx < engine.currentUnitIndex) span.className = "kana-done";
-    else if (idx === engine.currentUnitIndex) span.className = "kana-current";
-    else span.className = "kana-pending";
-    els.kanaLine.appendChild(span);
-  });
 
   let html = "";
   engine.units.forEach((unit, idx) => {
@@ -171,7 +161,6 @@ function finishRound() {
 
   const elapsed = state.startTime ? (Date.now() - state.startTime) / 1000 : 0;
   const speed = elapsed > 0 ? (state.roundStats.correct / elapsed).toFixed(1) : "0.0";
-  els.kanaLine.innerHTML = "";
   els.romajiLine.innerHTML = "";
   els.displayLine.textContent = "";
   els.progressLabel.textContent = "完了";
