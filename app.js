@@ -1,17 +1,22 @@
-const ITEMS_PER_ROUND = 5;
 const STORAGE_KEY = "typingPracticeStats";
+const DURATION_OPTIONS = [30, 60, 90, 120];
+const DEFAULT_DURATION = 30;
 
 const state = {
   difficulty: "easy",
+  duration: DEFAULT_DURATION,
+  pool: [],
   queue: [],
   engine: null,
   startTime: null,
   timerId: null,
+  roundOver: false,
   roundStats: { correct: 0, miss: 0, itemsDone: 0, keyMissMap: {}, keyAttemptMap: {} }
 };
 
 const els = {
   difficultyButtons: document.querySelectorAll(".difficulty-btn"),
+  durationButtons: document.querySelectorAll(".duration-btn"),
   displayLine: document.getElementById("display-line"),
   romajiLine: document.getElementById("romaji-line"),
   progressLabel: document.getElementById("progress-label"),
@@ -113,45 +118,60 @@ function renderKanaLine() {
 
 function updateStatsDisplay() {
   const elapsed = state.startTime ? (Date.now() - state.startTime) / 1000 : 0;
-  const speed = elapsed > 0 ? (state.roundStats.correct / elapsed) : 0;
+  const remaining = Math.max(state.duration - elapsed, 0);
+  const speed = elapsed > 0 ? (state.roundStats.correct / Math.min(elapsed, state.duration)) : 0;
   const totalKeys = state.roundStats.correct + state.roundStats.miss;
   const accuracy = totalKeys > 0 ? (state.roundStats.correct / totalKeys) * 100 : 100;
 
   els.speedOut.innerHTML = speed.toFixed(1) + '<span class="unit-label"> 打/秒</span>';
-  els.timeOut.innerHTML = elapsed.toFixed(1) + '<span class="unit-label"> 秒</span>';
+  els.timeOut.innerHTML = remaining.toFixed(1) + '<span class="unit-label"> 秒</span>';
   els.missOut.textContent = state.roundStats.miss;
   els.accuracyOut.innerHTML = accuracy.toFixed(0) + '<span class="unit-label">%</span>';
 }
 
 function tick() {
-  updateStatsDisplay();
-}
-
-function nextItem() {
-  if (state.queue.length === 0) {
+  const elapsed = (Date.now() - state.startTime) / 1000;
+  if (elapsed >= state.duration) {
+    updateStatsDisplay();
     finishRound();
     return;
   }
+  updateStatsDisplay();
+}
+
+function refillQueueIfNeeded() {
+  if (state.queue.length === 0) {
+    state.queue = shuffle(state.pool);
+  }
+}
+
+function nextItem() {
+  if (state.roundOver) return;
+  refillQueueIfNeeded();
   const item = state.queue.shift();
   state.engine = new TypingEngine(item.kana);
   els.displayLine.textContent = item.display;
-  els.progressLabel.textContent = `${state.roundStats.itemsDone + 1} / ${ITEMS_PER_ROUND}問目`;
+  els.progressLabel.textContent = `${state.roundStats.itemsDone + 1}問目`;
   renderKanaLine();
 }
 
 function startRound() {
-  const pool = shuffle(SENTENCE_SETS[state.difficulty]);
-  state.queue = pool.slice(0, ITEMS_PER_ROUND);
+  state.pool = SENTENCE_SETS[state.difficulty];
+  state.queue = shuffle(state.pool);
   state.startTime = null;
+  state.roundOver = false;
   clearInterval(state.timerId);
   state.roundStats = { correct: 0, miss: 0, itemsDone: 0, keyMissMap: {}, keyAttemptMap: {} };
   els.resultPanel.style.display = "none";
   els.focusHint.style.display = "block";
   updateStatsDisplay();
+  els.timeOut.innerHTML = state.duration.toFixed(1) + '<span class="unit-label"> 秒</span>';
   nextItem();
 }
 
 function finishRound() {
+  if (state.roundOver) return;
+  state.roundOver = true;
   clearInterval(state.timerId);
   const stored = loadStats();
   mergeKeyMaps(stored.keyMissMap, state.roundStats.keyMissMap);
@@ -159,18 +179,18 @@ function finishRound() {
   saveStats(stored);
   renderWeakKeys();
 
-  const elapsed = state.startTime ? (Date.now() - state.startTime) / 1000 : 0;
+  const elapsed = state.startTime ? Math.min((Date.now() - state.startTime) / 1000, state.duration) : 0;
   const speed = elapsed > 0 ? (state.roundStats.correct / elapsed).toFixed(1) : "0.0";
   els.romajiLine.innerHTML = "";
   els.displayLine.textContent = "";
   els.progressLabel.textContent = "完了";
   keyboard.highlightExpected([]);
   els.resultPanel.style.display = "block";
-  els.resultText.textContent = `平均速度 ${speed} 打/秒・ミス ${state.roundStats.miss} 回`;
+  els.resultText.textContent = `${state.roundStats.itemsDone}問・平均速度 ${speed} 打/秒・ミス ${state.roundStats.miss} 回`;
 }
 
 function handleKeydown(e) {
-  if (!state.engine || state.engine.isDone) return;
+  if (!state.engine || state.engine.isDone || state.roundOver) return;
   if (e.metaKey || e.ctrlKey || e.altKey) return;
 
   const key = e.key;
@@ -210,6 +230,15 @@ els.difficultyButtons.forEach(btn => {
     els.difficultyButtons.forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     state.difficulty = btn.dataset.difficulty;
+    startRound();
+  });
+});
+
+els.durationButtons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    els.durationButtons.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    state.duration = parseInt(btn.dataset.duration, 10);
     startRound();
   });
 });
