@@ -74,13 +74,22 @@ body {
   margin: 0 0 1rem;
 }
 
+.display-line {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0 0 0.75rem;
+}
+
 .kana-line {
   text-align: center;
-  font-size: 30px;
-  font-weight: 600;
-  letter-spacing: 2px;
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: 1px;
   margin-bottom: 0.5rem;
-  min-height: 42px;
+  min-height: 26px;
+  color: var(--text-secondary);
 }
 
 .kana-done { color: var(--success); }
