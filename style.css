@@ -41,7 +41,7 @@ body {
   margin-bottom: 1.5rem;
 }
 
-.difficulty-btn {
+.difficulty-btn, .duration-btn {
   padding: 8px 20px;
   border-radius: 999px;
   border: 1px solid var(--border);
@@ -52,8 +52,8 @@ body {
   transition: all 0.15s ease;
 }
 
-.difficulty-btn:hover { border-color: var(--accent); }
-.difficulty-btn.active {
+.difficulty-btn:hover, .duration-btn:hover { border-color: var(--accent); }
+.difficulty-btn.active, .duration-btn.active {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
