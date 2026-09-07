@@ -38,6 +38,8 @@ const els = {
   missOut: document.getElementById("miss-out"),
   accuracyOut: document.getElementById("accuracy-out"),
   keyboardContainer: document.getElementById("keyboard"),
+  statsGrid: document.getElementById("stats-grid"),
+  timeLabel: document.getElementById("time-label"),
   weakKeyList: document.getElementById("weak-key-list"),
   resetStatsBtn: document.getElementById("reset-stats-btn"),
   restartBtn: document.getElementById("restart-btn"),
@@ -74,6 +76,10 @@ function shuffle(arr) {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
+}
+
+function isUnlimitedMode() {
+  return state.duration === Infinity;
 }
 
 function renderWeakKeys() {
@@ -157,8 +163,8 @@ function completeCurrentUnitSpan(completedIdx) {
 
 function updateStatsDisplay() {
   const elapsed = state.startTime ? (Date.now() - state.startTime) / 1000 : 0;
-  const remaining = Math.max(state.duration - elapsed, 0);
-  const speed = elapsed > 0 ? (state.roundStats.correct / Math.min(elapsed, state.duration)) : 0;
+  const remaining = isUnlimitedMode() ? elapsed : Math.max(state.duration - elapsed, 0);
+  const speed = elapsed > 0 ? (state.roundStats.correct / Math.min(elapsed, isUnlimitedMode() ? elapsed : state.duration)) : 0;
   const totalKeys = state.roundStats.correct + state.roundStats.miss;
   const accuracy = totalKeys > 0 ? (state.roundStats.correct / totalKeys) * 100 : 100;
 
@@ -240,11 +246,13 @@ function startRound() {
   els.romajiLine.style.display = isConversion ? "none" : "block";
   els.keyboardContainer.style.display = isConversion ? "none" : "flex";
   els.focusHint.textContent = isConversion
-    ? "入力してEnterで確定してください(IMEで変換できます)"
-    : "キーボードで入力を開始してください";
+    ? "入力してEnterで確定してください(IMEで変換できます) / Escでホームに戻れます"
+    : "キーボードで入力を開始してください / Escでホームに戻れます";
 
   updateStatsDisplay();
-  els.timeOut.innerHTML = state.duration.toFixed(1) + '<span class="unit-label"> 秒</span>';
+  els.statsGrid.style.display = "none";
+  els.timeLabel.textContent = isUnlimitedMode() ? "経過時間" : "残り時間";
+  els.timeOut.innerHTML = (isUnlimitedMode() ? "0.0" : state.duration.toFixed(1)) + '<span class="unit-label"> 秒</span>';
   nextItem();
 }
 
@@ -267,6 +275,7 @@ function finishRound() {
   els.progressLabel.textContent = "完了";
   keyboard.highlightExpected([]);
   els.resultPanel.style.display = "block";
+  els.statsGrid.style.display = "";
   els.resultText.textContent = `${state.roundStats.itemsDone}問・平均速度 ${speed} 打/秒・ミス ${state.roundStats.miss} 回`;
 }
 
@@ -371,7 +380,7 @@ els.durationButtons.forEach(btn => {
   btn.addEventListener("click", () => {
     els.durationButtons.forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
-    state.duration = parseInt(btn.dataset.duration, 10);
+    state.duration = btn.dataset.duration === "unlimited" ? Infinity : parseInt(btn.dataset.duration, 10);
   });
 });
 
@@ -414,5 +423,23 @@ window.addEventListener("keydown", () => {
     els.focusHint.style.display = "none";
   }
 });
+
+// Escキー: 通常モードは即ホームへ。無制限モードは1回目で結果表示、2回目でホームへ。
+function handleEscKey(e) {
+  if (e.key !== "Escape") return;
+  if (els.practiceScreen.style.display === "none") return;
+  e.preventDefault();
+
+  if (isUnlimitedMode()) {
+    if (!state.roundOver) {
+      finishRound();
+    } else {
+      showSetupScreen();
+    }
+  } else {
+    showSetupScreen();
+  }
+}
+window.addEventListener("keydown", handleEscKey);
 
 renderWeakKeys();
