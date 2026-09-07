@@ -208,7 +208,7 @@ summary:focus-visible {
   line-height: 1.6;
 }
 
-.romaji-done { color: var(--success); }
+.romaji-done { color: var(--text-primary); }
 .romaji-pending { color: var(--text-muted); }
 
 .ime-input {
