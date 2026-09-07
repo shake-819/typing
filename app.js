@@ -13,7 +13,8 @@ const state = {
   engine: null,
   unitEls: [],
   startTime: null,
-  timerId: null,
+  rafId: null,
+  lastStatsRenderAt: 0,
   roundOver: false,
   roundStats: { correct: 0, miss: 0, itemsDone: 0, keyMissMap: {}, keyAttemptMap: {} }
 };
@@ -134,7 +135,7 @@ function updateCurrentUnitSpan() {
   span.className = "romaji-unit";
   span.innerHTML = pattern
     .split("")
-    .map((ch, i) => `<span class="${i < typedLen ? "romaji-done" : "romaji-current"}">${ch}</span>`)
+    .map((ch, i) => `<span class="${i < typedLen ? "romaji-done" : "romaji-pending"}">${ch}</span>`)
     .join("");
 
   keyboard.highlightExpected(engine.nextExpectedKeys());
@@ -167,6 +168,8 @@ function updateStatsDisplay() {
   els.accuracyOut.innerHTML = accuracy.toFixed(0) + '<span class="unit-label">%</span>';
 }
 
+const STATS_UPDATE_INTERVAL_MS = 100;
+
 function tick() {
   const elapsed = (Date.now() - state.startTime) / 1000;
   if (elapsed >= state.duration) {
@@ -174,7 +177,24 @@ function tick() {
     finishRound();
     return;
   }
-  updateStatsDisplay();
+  // DOM書き換え(innerHTML)は重いので、時間経過のチェックだけ軽く毎フレーム行い、
+  // 実際の表示更新は100ms間隔に間引く。人の目には十分滑らかに見える頻度。
+  const now = Date.now();
+  if (now - state.lastStatsRenderAt >= STATS_UPDATE_INTERVAL_MS) {
+    state.lastStatsRenderAt = now;
+    updateStatsDisplay();
+  }
+  state.rafId = requestAnimationFrame(tick);
+}
+
+function startTicking() {
+  cancelAnimationFrame(state.rafId);
+  state.lastStatsRenderAt = 0;
+  state.rafId = requestAnimationFrame(tick);
+}
+
+function stopTicking() {
+  cancelAnimationFrame(state.rafId);
 }
 
 function refillQueueIfNeeded() {
@@ -209,7 +229,7 @@ function startRound() {
   state.queue = shuffle(state.pool);
   state.startTime = null;
   state.roundOver = false;
-  clearInterval(state.timerId);
+  stopTicking();
   state.roundStats = { correct: 0, miss: 0, itemsDone: 0, keyMissMap: {}, keyAttemptMap: {} };
   els.resultPanel.style.display = "none";
   els.focusHint.style.display = "block";
@@ -230,7 +250,7 @@ function startRound() {
 function finishRound() {
   if (state.roundOver) return;
   state.roundOver = true;
-  clearInterval(state.timerId);
+  stopTicking();
   const stored = loadStats();
   mergeKeyMaps(stored.keyMissMap, state.roundStats.keyMissMap);
   mergeKeyMaps(stored.keyAttemptMap, state.roundStats.keyAttemptMap);
@@ -261,7 +281,7 @@ function handleKeydown(e) {
 
   if (!state.startTime) {
     state.startTime = Date.now();
-    state.timerId = setInterval(tick, 100);
+    startTicking();
   }
 
   const result = state.engine.handleKey(key);
@@ -297,7 +317,7 @@ function handleKeydown(e) {
 function handleImeInput() {
   if (!state.startTime && !state.roundOver) {
     state.startTime = Date.now();
-    state.timerId = setInterval(tick, 100);
+    startTicking();
   }
 }
 
@@ -363,7 +383,7 @@ els.modeButtons.forEach(btn => {
 });
 
 function showSetupScreen() {
-  clearInterval(state.timerId);
+  stopTicking();
   state.roundOver = true;
   els.practiceScreen.style.display = "none";
   els.setupScreen.style.display = "block";
@@ -387,6 +407,11 @@ els.resetStatsBtn.addEventListener("click", () => {
 });
 
 window.addEventListener("keydown", handleKeydown);
-window.addEventListener("keydown", () => { els.focusHint.style.display = "none"; }, { once: false });
+window.addEventListener("keydown", () => {
+  // 既に非表示なら何もしない(打鍵のたびに毎回同じ値を書き込むだけの無駄を防ぐ)
+  if (els.focusHint.style.display !== "none") {
+    els.focusHint.style.display = "none";
+  }
+});
 
 renderWeakKeys();
