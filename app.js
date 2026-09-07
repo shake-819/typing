@@ -3,7 +3,7 @@ const DURATION_OPTIONS = [30, 60, 90, 120];
 const DEFAULT_DURATION = 30;
 
 const state = {
-  genre: "difficulty", // "difficulty": 難易度別セット / "business": よく使うビジネス用語50
+  genre: "difficulty", // "difficulty": 難易度別セット / "business": よく使うビジネス用語50 / "js": JS構文あるある50
   difficulty: "easy",
   duration: DEFAULT_DURATION,
   conversionMode: "off", // "off": 変換なし(ローマ字を直接判定) / "on": 変換あり(実際のIMEで<input>に入力)
@@ -196,13 +196,15 @@ function nextItem() {
     els.imeInput.classList.remove("ime-wrong");
     els.imeInput.focus();
   } else {
-    state.engine = new TypingEngine(item.kana);
+    state.engine = new TypingEngine(item.kana, { caseSensitive: state.genre === "js" });
     buildRomajiLine();
   }
 }
 
 function startRound() {
-  state.pool = state.genre === "business" ? BUSINESS_SENTENCES : SENTENCE_SETS[state.difficulty];
+  state.pool = state.genre === "business" ? BUSINESS_SENTENCES
+    : state.genre === "js" ? JS_SENTENCES
+    : SENTENCE_SETS[state.difficulty];
   state.queue = shuffle(state.pool);
   state.startTime = null;
   state.roundOver = false;
@@ -253,7 +255,7 @@ function handleKeydown(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
 
   const key = e.key;
-  if (!/^[a-zA-Z!?\-']$/.test(key)) return;
+  if (!isTypableKey(key)) return;
   e.preventDefault();
 
   if (!state.startTime) {
@@ -339,7 +341,7 @@ els.genreButtons.forEach(btn => {
     els.genreButtons.forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     state.genre = btn.dataset.genre;
-    els.difficultySettingBlock.style.display = state.genre === "business" ? "none" : "block";
+    els.difficultySettingBlock.style.display = (state.genre === "business" || state.genre === "js") ? "none" : "block";
   });
 });
 
