@@ -209,13 +209,6 @@ summary:focus-visible {
 }
 
 .romaji-done { color: var(--success); }
-.romaji-current {
-  color: #fff;
-  background: var(--accent);
-  font-weight: 700;
-  border-radius: 3px;
-  padding: 0 2px;
-}
 .romaji-pending { color: var(--text-muted); }
 
 .ime-input {
