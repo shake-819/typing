@@ -5,10 +5,8 @@ const DEFAULT_DURATION = 30;
 const state = {
   difficulty: "easy",
   duration: DEFAULT_DURATION,
-  conversionMode: "off", // "off": 変換なし(従来通り) / "on": 変換あり(スペース変換→エンター確定)
+  conversionMode: "off", // "off": 変換なし(ローマ字を直接判定) / "on": 変換あり(実際のIMEで<input>に入力)
   currentItem: null,
-  imeHiragana: "",
-  imePhase: "typing", // "typing" -> "ready"(変換待ち) -> "converted"(確定待ち)
   pool: [],
   queue: [],
   engine: null,
@@ -29,8 +27,7 @@ const els = {
   modeButtons: document.querySelectorAll(".mode-btn"),
   displayLine: document.getElementById("display-line"),
   romajiLine: document.getElementById("romaji-line"),
-  imeLine: document.getElementById("ime-line"),
-  imePhaseHint: document.getElementById("ime-phase-hint"),
+  imeInput: document.getElementById("ime-input"),
   progressLabel: document.getElementById("progress-label"),
   speedOut: document.getElementById("speed-out"),
   timeOut: document.getElementById("time-out"),
@@ -188,17 +185,16 @@ function nextItem() {
   refillQueueIfNeeded();
   const item = state.queue.shift();
   state.currentItem = item;
-  state.engine = new TypingEngine(item.kana);
   els.displayLine.textContent = item.display;
   els.progressLabel.textContent = `${state.roundStats.itemsDone + 1}問目`;
-  buildRomajiLine();
 
-  state.imeHiragana = "";
-  state.imePhase = "typing";
   if (state.conversionMode === "on") {
-    els.imeLine.textContent = "";
-    els.imeLine.classList.remove("ime-converted");
-    els.imePhaseHint.textContent = "読みを入力してください";
+    els.imeInput.value = "";
+    els.imeInput.classList.remove("ime-wrong");
+    els.imeInput.focus();
+  } else {
+    state.engine = new TypingEngine(item.kana);
+    buildRomajiLine();
   }
 }
 
@@ -211,8 +207,15 @@ function startRound() {
   state.roundStats = { correct: 0, miss: 0, itemsDone: 0, keyMissMap: {}, keyAttemptMap: {} };
   els.resultPanel.style.display = "none";
   els.focusHint.style.display = "block";
-  els.imeLine.style.display = state.conversionMode === "on" ? "block" : "none";
-  els.imePhaseHint.style.display = state.conversionMode === "on" ? "block" : "none";
+
+  const isConversion = state.conversionMode === "on";
+  els.imeInput.style.display = isConversion ? "block" : "none";
+  els.romajiLine.style.display = isConversion ? "none" : "block";
+  els.keyboardContainer.style.display = isConversion ? "none" : "flex";
+  els.focusHint.textContent = isConversion
+    ? "入力してEnterで確定してください(IMEで変換できます)"
+    : "キーボードで入力を開始してください";
+
   updateStatsDisplay();
   els.timeOut.innerHTML = state.duration.toFixed(1) + '<span class="unit-label"> 秒</span>';
   nextItem();
@@ -232,41 +235,19 @@ function finishRound() {
   const speed = elapsed > 0 ? (state.roundStats.correct / elapsed).toFixed(1) : "0.0";
   els.romajiLine.innerHTML = "";
   els.displayLine.textContent = "";
-  els.imeLine.textContent = "";
-  els.imeLine.classList.remove("ime-converted");
-  els.imePhaseHint.textContent = "";
+  els.imeInput.value = "";
+  els.imeInput.blur();
   els.progressLabel.textContent = "完了";
   keyboard.highlightExpected([]);
   els.resultPanel.style.display = "block";
   els.resultText.textContent = `${state.roundStats.itemsDone}問・平均速度 ${speed} 打/秒・ミス ${state.roundStats.miss} 回`;
 }
 
+// --- 変換なしモード: ローマ字を1キーずつモーラ単位で判定する ---
 function handleKeydown(e) {
-  if (!state.engine || state.roundOver) return;
+  if (state.conversionMode !== "off") return;
+  if (!state.engine || state.engine.isDone || state.roundOver) return;
   if (e.metaKey || e.ctrlKey || e.altKey) return;
-
-  // 変換ありモード: 読みを打ち終えた後は、スペースで変換→エンターで確定の
-  // 2ステップを経てから次の問題に進む。
-  if (state.conversionMode === "on" && state.engine.isDone) {
-    if (state.imePhase === "ready" && e.key === " ") {
-      e.preventDefault();
-      state.imePhase = "converted";
-      els.imeLine.textContent = state.currentItem.display;
-      els.imeLine.classList.add("ime-converted");
-      els.imePhaseHint.textContent = "Enterで確定してください";
-      return;
-    }
-    if (state.imePhase === "converted" && e.key === "Enter") {
-      e.preventDefault();
-      state.roundStats.itemsDone++;
-      setTimeout(nextItem, 150);
-      return;
-    }
-    if (e.key === " " || e.key === "Enter") e.preventDefault();
-    return;
-  }
-
-  if (state.engine.isDone) return;
 
   const key = e.key;
   if (!/^[a-zA-Z!?\-']$/.test(key)) return;
@@ -296,23 +277,51 @@ function handleKeydown(e) {
 
   if (result.result === "unit-complete") {
     completeCurrentUnitSpan(completedIdx);
-    if (state.conversionMode === "on") {
-      state.imeHiragana += state.engine.units[completedIdx].display;
-      els.imeLine.textContent = state.imeHiragana;
-    }
     if (state.engine.isDone) {
-      if (state.conversionMode === "on") {
-        state.imePhase = "ready";
-        els.imePhaseHint.textContent = "スペースで変換してください";
-      } else {
-        state.roundStats.itemsDone++;
-        setTimeout(nextItem, 150);
-      }
+      state.roundStats.itemsDone++;
+      setTimeout(nextItem, 150);
     }
   } else if (result.result === "progress") {
     updateCurrentUnitSpan();
   }
 }
+
+// --- 変換ありモード: 実際のIME入力を<input>にそのまま任せ、
+//     Enterが押された時点(IMEの変換確定中でないとき)に答え合わせをする ---
+function handleImeInput() {
+  if (!state.startTime && !state.roundOver) {
+    state.startTime = Date.now();
+    state.timerId = setInterval(tick, 100);
+  }
+}
+
+function handleImeKeydown(e) {
+  if (state.conversionMode !== "on" || state.roundOver) return;
+  if (e.key !== "Enter") return;
+  // IMEで変換候補を確定させるためのEnter(変換中)は無視し、
+  // 完全に確定した状態でのEnterだけを「答え合わせ」として扱う。
+  if (e.isComposing || e.keyCode === 229) return;
+
+  e.preventDefault();
+  const typed = els.imeInput.value.trim();
+  if (!typed) return;
+
+  if (typed === state.currentItem.display) {
+    state.roundStats.correct += typed.length;
+    state.roundStats.itemsDone++;
+    els.imeInput.classList.remove("ime-wrong");
+    updateStatsDisplay();
+    setTimeout(nextItem, 150);
+  } else {
+    state.roundStats.miss++;
+    els.imeInput.classList.add("ime-wrong");
+    setTimeout(() => els.imeInput.classList.remove("ime-wrong"), 300);
+    updateStatsDisplay();
+  }
+}
+
+els.imeInput.addEventListener("input", handleImeInput);
+els.imeInput.addEventListener("keydown", handleImeKeydown);
 
 els.difficultyButtons.forEach(btn => {
   btn.addEventListener("click", () => {
