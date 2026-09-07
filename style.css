@@ -67,6 +67,7 @@ body {
 
 .difficulty-bar {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   justify-content: center;
   margin-bottom: 1.5rem;
