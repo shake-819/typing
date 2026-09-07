@@ -16,60 +16,76 @@
       <p class="subtitle">漢字変換なし・ローマ字直接入力</p>
     </header>
 
-    <div class="difficulty-bar">
-      <button class="difficulty-btn active" data-difficulty="easy">易しい</button>
-      <button class="difficulty-btn" data-difficulty="normal">ふつう</button>
-      <button class="difficulty-btn" data-difficulty="hard">難しい</button>
-    </div>
-
-    <div class="difficulty-bar">
-      <button class="duration-btn active" data-duration="30">30秒</button>
-      <button class="duration-btn" data-duration="60">60秒</button>
-      <button class="duration-btn" data-duration="90">90秒</button>
-      <button class="duration-btn" data-duration="120">120秒</button>
-    </div>
-
-    <main class="practice-card">
-      <p class="progress-label" id="progress-label">1 / 5問目</p>
-
-      <p class="display-line" id="display-line"></p>
-      <div class="romaji-line" id="romaji-line"></div>
-
-      <p class="focus-hint" id="focus-hint">キーボードで入力を開始してください</p>
-
-      <div class="result-panel" id="result-panel" style="display:none;">
-        <p id="result-text"></p>
-        <button id="restart-btn" class="primary-btn">もう一度</button>
-      </div>
-
-      <div class="stats-grid">
-        <div class="stat-box">
-          <p class="stat-label">速度</p>
-          <p class="stat-value" id="speed-out">0.0<span class="unit-label"> 打/秒</span></p>
-        </div>
-        <div class="stat-box">
-          <p class="stat-label">残り時間</p>
-          <p class="stat-value" id="time-out">0.0<span class="unit-label"> 秒</span></p>
-        </div>
-        <div class="stat-box">
-          <p class="stat-label">ミス数</p>
-          <p class="stat-value" id="miss-out">0</p>
-        </div>
-        <div class="stat-box">
-          <p class="stat-label">正確率</p>
-          <p class="stat-value" id="accuracy-out">100<span class="unit-label">%</span></p>
+    <!-- 設定画面: ジャンル・難易度・時間を選んでから練習を始める -->
+    <section id="setup-screen" class="screen">
+      <div class="setting-block">
+        <p class="setting-label">難易度</p>
+        <div class="difficulty-bar">
+          <button class="difficulty-btn active" data-difficulty="easy">易しい</button>
+          <button class="difficulty-btn" data-difficulty="normal">ふつう</button>
+          <button class="difficulty-btn" data-difficulty="hard">難しい</button>
         </div>
       </div>
 
-      <div class="keyboard" id="keyboard"></div>
-    </main>
-
-    <section class="weak-key-panel">
-      <div class="weak-key-header">
-        <h2>苦手なキー</h2>
-        <button id="reset-stats-btn" class="ghost-btn">記録をリセット</button>
+      <div class="setting-block">
+        <p class="setting-label">制限時間</p>
+        <div class="difficulty-bar">
+          <button class="duration-btn active" data-duration="30">30秒</button>
+          <button class="duration-btn" data-duration="60">60秒</button>
+          <button class="duration-btn" data-duration="90">90秒</button>
+          <button class="duration-btn" data-duration="120">120秒</button>
+        </div>
       </div>
-      <div id="weak-key-list"></div>
+
+      <button id="start-btn" class="start-btn">はじめる</button>
+
+      <section class="weak-key-panel">
+        <div class="weak-key-header">
+          <h2>苦手なキー</h2>
+          <button id="reset-stats-btn" class="ghost-btn">記録をリセット</button>
+        </div>
+        <div id="weak-key-list"></div>
+      </section>
+    </section>
+
+    <!-- 練習画面 -->
+    <section id="practice-screen" class="screen" style="display:none;">
+      <button id="back-btn" class="ghost-btn back-btn">← 設定に戻る</button>
+
+      <main class="practice-card">
+        <p class="progress-label" id="progress-label">1問目</p>
+
+        <p class="display-line" id="display-line"></p>
+        <div class="romaji-line" id="romaji-line"></div>
+
+        <p class="focus-hint" id="focus-hint">キーボードで入力を開始してください</p>
+
+        <div class="result-panel" id="result-panel" style="display:none;">
+          <p id="result-text"></p>
+          <button id="restart-btn" class="primary-btn">もう一度</button>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-box">
+            <p class="stat-label">速度</p>
+            <p class="stat-value" id="speed-out">0.0<span class="unit-label"> 打/秒</span></p>
+          </div>
+          <div class="stat-box">
+            <p class="stat-label">残り時間</p>
+            <p class="stat-value" id="time-out">0.0<span class="unit-label"> 秒</span></p>
+          </div>
+          <div class="stat-box">
+            <p class="stat-label">ミス数</p>
+            <p class="stat-value" id="miss-out">0</p>
+          </div>
+          <div class="stat-box">
+            <p class="stat-label">正確率</p>
+            <p class="stat-value" id="accuracy-out">100<span class="unit-label">%</span></p>
+          </div>
+        </div>
+
+        <div class="keyboard" id="keyboard"></div>
+      </main>
     </section>
   </div>
 
