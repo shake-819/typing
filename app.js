@@ -225,6 +225,7 @@ function startRound() {
   state.pool = state.genre === "business" ? BUSINESS_SENTENCES
     : state.genre === "js" ? JS_SENTENCES
     : state.genre === "sql" ? SQL_SENTENCES
+    : state.genre === "it" ? IT_SENTENCES
     : SENTENCE_SETS[state.difficulty];
   state.queue = shuffle(state.pool);
   state.startTime = null;
@@ -362,7 +363,7 @@ els.genreButtons.forEach(btn => {
     els.genreButtons.forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     state.genre = btn.dataset.genre;
-    els.difficultySettingBlock.style.display = (state.genre === "business" || state.genre === "js" || state.genre === "sql") ? "none" : "block";
+    els.difficultySettingBlock.style.display = (state.genre === "business" || state.genre === "js" || state.genre === "sql" || state.genre === "it") ? "none" : "block";
   });
 });
 
