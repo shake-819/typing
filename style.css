@@ -34,6 +34,37 @@ body {
 .app-header h1 { font-size: 24px; font-weight: 600; margin: 0 0 4px; }
 .subtitle { color: var(--text-secondary); font-size: 14px; margin: 0; }
 
+.setting-block { margin-bottom: 1.5rem; }
+.setting-label {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0 0 8px;
+}
+
+.start-btn {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  margin: 0 auto 2rem;
+  padding: 14px;
+  border-radius: 999px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.start-btn:hover { opacity: 0.9; }
+
+.back-btn {
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+
 .difficulty-bar {
   display: flex;
   gap: 8px;
