@@ -215,7 +215,7 @@ body {
   font-weight: 600;
   color: #e8e8ea;
   text-transform: uppercase;
-  transition: all 0.1s ease;
+  transition: background-color 0.1s ease, border-color 0.1s ease, color 0.1s ease;
   box-sizing: border-box;
 }
 
