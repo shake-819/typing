@@ -5,6 +5,10 @@ const DEFAULT_DURATION = 30;
 const state = {
   difficulty: "easy",
   duration: DEFAULT_DURATION,
+  conversionMode: "off", // "off": 変換なし(従来通り) / "on": 変換あり(スペース変換→エンター確定)
+  currentItem: null,
+  imeHiragana: "",
+  imePhase: "typing", // "typing" -> "ready"(変換待ち) -> "converted"(確定待ち)
   pool: [],
   queue: [],
   engine: null,
@@ -22,8 +26,11 @@ const els = {
   backBtn: document.getElementById("back-btn"),
   difficultyButtons: document.querySelectorAll(".difficulty-btn"),
   durationButtons: document.querySelectorAll(".duration-btn"),
+  modeButtons: document.querySelectorAll(".mode-btn"),
   displayLine: document.getElementById("display-line"),
   romajiLine: document.getElementById("romaji-line"),
+  imeLine: document.getElementById("ime-line"),
+  imePhaseHint: document.getElementById("ime-phase-hint"),
   progressLabel: document.getElementById("progress-label"),
   speedOut: document.getElementById("speed-out"),
   timeOut: document.getElementById("time-out"),
@@ -180,10 +187,19 @@ function nextItem() {
   if (state.roundOver) return;
   refillQueueIfNeeded();
   const item = state.queue.shift();
+  state.currentItem = item;
   state.engine = new TypingEngine(item.kana);
   els.displayLine.textContent = item.display;
   els.progressLabel.textContent = `${state.roundStats.itemsDone + 1}問目`;
   buildRomajiLine();
+
+  state.imeHiragana = "";
+  state.imePhase = "typing";
+  if (state.conversionMode === "on") {
+    els.imeLine.textContent = "";
+    els.imeLine.classList.remove("ime-converted");
+    els.imePhaseHint.textContent = "読みを入力してください";
+  }
 }
 
 function startRound() {
@@ -195,6 +211,8 @@ function startRound() {
   state.roundStats = { correct: 0, miss: 0, itemsDone: 0, keyMissMap: {}, keyAttemptMap: {} };
   els.resultPanel.style.display = "none";
   els.focusHint.style.display = "block";
+  els.imeLine.style.display = state.conversionMode === "on" ? "block" : "none";
+  els.imePhaseHint.style.display = state.conversionMode === "on" ? "block" : "none";
   updateStatsDisplay();
   els.timeOut.innerHTML = state.duration.toFixed(1) + '<span class="unit-label"> 秒</span>';
   nextItem();
@@ -214,6 +232,9 @@ function finishRound() {
   const speed = elapsed > 0 ? (state.roundStats.correct / elapsed).toFixed(1) : "0.0";
   els.romajiLine.innerHTML = "";
   els.displayLine.textContent = "";
+  els.imeLine.textContent = "";
+  els.imeLine.classList.remove("ime-converted");
+  els.imePhaseHint.textContent = "";
   els.progressLabel.textContent = "完了";
   keyboard.highlightExpected([]);
   els.resultPanel.style.display = "block";
@@ -221,8 +242,31 @@ function finishRound() {
 }
 
 function handleKeydown(e) {
-  if (!state.engine || state.engine.isDone || state.roundOver) return;
+  if (!state.engine || state.roundOver) return;
   if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+  // 変換ありモード: 読みを打ち終えた後は、スペースで変換→エンターで確定の
+  // 2ステップを経てから次の問題に進む。
+  if (state.conversionMode === "on" && state.engine.isDone) {
+    if (state.imePhase === "ready" && e.key === " ") {
+      e.preventDefault();
+      state.imePhase = "converted";
+      els.imeLine.textContent = state.currentItem.display;
+      els.imeLine.classList.add("ime-converted");
+      els.imePhaseHint.textContent = "Enterで確定してください";
+      return;
+    }
+    if (state.imePhase === "converted" && e.key === "Enter") {
+      e.preventDefault();
+      state.roundStats.itemsDone++;
+      setTimeout(nextItem, 150);
+      return;
+    }
+    if (e.key === " " || e.key === "Enter") e.preventDefault();
+    return;
+  }
+
+  if (state.engine.isDone) return;
 
   const key = e.key;
   if (!/^[a-zA-Z!?\-']$/.test(key)) return;
@@ -252,9 +296,18 @@ function handleKeydown(e) {
 
   if (result.result === "unit-complete") {
     completeCurrentUnitSpan(completedIdx);
+    if (state.conversionMode === "on") {
+      state.imeHiragana += state.engine.units[completedIdx].display;
+      els.imeLine.textContent = state.imeHiragana;
+    }
     if (state.engine.isDone) {
-      state.roundStats.itemsDone++;
-      setTimeout(nextItem, 150);
+      if (state.conversionMode === "on") {
+        state.imePhase = "ready";
+        els.imePhaseHint.textContent = "スペースで変換してください";
+      } else {
+        state.roundStats.itemsDone++;
+        setTimeout(nextItem, 150);
+      }
     }
   } else if (result.result === "progress") {
     updateCurrentUnitSpan();
@@ -274,6 +327,14 @@ els.durationButtons.forEach(btn => {
     els.durationButtons.forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     state.duration = parseInt(btn.dataset.duration, 10);
+  });
+});
+
+els.modeButtons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    els.modeButtons.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    state.conversionMode = btn.dataset.mode;
   });
 });
 
