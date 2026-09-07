@@ -8,6 +8,7 @@ const state = {
   pool: [],
   queue: [],
   engine: null,
+  unitEls: [],
   startTime: null,
   timerId: null,
   roundOver: false,
@@ -97,27 +98,53 @@ function renderWeakKeys() {
   });
 }
 
-function renderKanaLine() {
+// お題が変わったタイミングで1回だけ、モーラごとの入れ物(span)を作る。
+// 完了済み・未着手のモーラは以後書き換えないので、再描画コストがかからない。
+function buildRomajiLine() {
   const engine = state.engine;
-
-  let html = "";
-  engine.units.forEach((unit, idx) => {
-    if (idx < engine.currentUnitIndex) {
-      const pattern = unit.patterns[0];
-      html += `<span class="romaji-done">${pattern}</span>`;
-    } else if (idx === engine.currentUnitIndex) {
-      const pattern = engine.displayPatternForCurrentUnit();
-      const typedLen = engine.typedBuffer.length;
-      for (let i = 0; i < pattern.length; i++) {
-        html += `<span class="${i < typedLen ? "romaji-done" : "romaji-current"}">${pattern[i]}</span>`;
-      }
-    } else {
-      html += `<span class="romaji-pending">${unit.patterns[0]}</span>`;
-    }
+  const fragment = document.createDocumentFragment();
+  state.unitEls = engine.units.map(unit => {
+    const span = document.createElement("span");
+    span.className = "romaji-pending";
+    span.textContent = unit.patterns[0];
+    fragment.appendChild(span);
+    return span;
   });
-  els.romajiLine.innerHTML = html;
+  els.romajiLine.innerHTML = "";
+  els.romajiLine.appendChild(fragment);
+  updateCurrentUnitSpan();
+}
+
+// 現在入力中のモーラ1つ分だけを更新する(打鍵のたびに呼ばれる軽量な処理)。
+function updateCurrentUnitSpan() {
+  const engine = state.engine;
+  const idx = engine.currentUnitIndex;
+  if (idx >= state.unitEls.length) return;
+
+  const span = state.unitEls[idx];
+  const pattern = engine.displayPatternForCurrentUnit();
+  const typedLen = engine.typedBuffer.length;
+  span.className = "romaji-unit";
+  span.innerHTML = pattern
+    .split("")
+    .map((ch, i) => `<span class="${i < typedLen ? "romaji-done" : "romaji-current"}">${ch}</span>`)
+    .join("");
 
   keyboard.highlightExpected(engine.nextExpectedKeys());
+}
+
+// 1モーラ打ち終えたタイミングで、そのモーラの表示を確定させ、次のモーラへ移る。
+function completeCurrentUnitSpan(completedIdx) {
+  const engine = state.engine;
+  const span = state.unitEls[completedIdx];
+  span.className = "romaji-done";
+  span.textContent = engine.units[completedIdx].patterns[0];
+
+  if (!engine.isDone) {
+    updateCurrentUnitSpan();
+  } else {
+    keyboard.highlightExpected([]);
+  }
 }
 
 function updateStatsDisplay() {
@@ -156,7 +183,7 @@ function nextItem() {
   state.engine = new TypingEngine(item.kana);
   els.displayLine.textContent = item.display;
   els.progressLabel.textContent = `${state.roundStats.itemsDone + 1}問目`;
-  renderKanaLine();
+  buildRomajiLine();
 }
 
 function startRound() {
@@ -209,6 +236,8 @@ function handleKeydown(e) {
   const result = state.engine.handleKey(key);
   if (result.result === "ignored") return;
 
+  const completedIdx = state.engine.currentUnitIndex - 1;
+
   if (result.result === "miss") {
     state.roundStats.miss++;
     state.roundStats.keyMissMap[result.key] = (state.roundStats.keyMissMap[result.key] || 0) + 1;
@@ -221,11 +250,14 @@ function handleKeydown(e) {
 
   updateStatsDisplay();
 
-  if (state.engine.isDone) {
-    state.roundStats.itemsDone++;
-    setTimeout(nextItem, 150);
-  } else {
-    renderKanaLine();
+  if (result.result === "unit-complete") {
+    completeCurrentUnitSpan(completedIdx);
+    if (state.engine.isDone) {
+      state.roundStats.itemsDone++;
+      setTimeout(nextItem, 150);
+    }
+  } else if (result.result === "progress") {
+    updateCurrentUnitSpan();
   }
 }
 
