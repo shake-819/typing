@@ -19,6 +19,14 @@
     <!-- 設定画面: ジャンル・難易度・時間を選んでから練習を始める -->
     <section id="setup-screen" class="screen">
       <div class="setting-block">
+        <p class="setting-label">出題内容</p>
+        <div class="difficulty-bar">
+          <button class="genre-btn active" data-genre="difficulty">難易度から選ぶ</button>
+          <button class="genre-btn" data-genre="business">よく使うビジネス用語50</button>
+        </div>
+      </div>
+
+      <div class="setting-block" id="difficulty-setting-block">
         <p class="setting-label">難易度</p>
         <div class="difficulty-bar">
           <button class="difficulty-btn active" data-difficulty="easy">易しい</button>
@@ -110,6 +118,7 @@
 
   <script src="kana-table.js"></script>
   <script src="sentences.js"></script>
+  <script src="business-sentences.js"></script>
   <script src="typing-engine.js"></script>
   <script src="keyboard.js"></script>
   <script src="app.js"></script>
