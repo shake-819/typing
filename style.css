@@ -129,30 +129,36 @@ body {
 .romaji-current { color: var(--text-primary); font-weight: 600; }
 .romaji-pending { color: var(--text-muted); }
 
-.ime-line {
+.ime-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
   text-align: center;
   font-size: 22px;
   font-weight: 600;
   min-height: 32px;
-  margin-bottom: 0.5rem;
-  padding: 0.4rem 0.8rem;
-  background: var(--bg, #f4f4f5);
-  border: 1px solid var(--border);
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.8rem;
+  background: var(--surface);
+  border: 2px solid var(--border);
   border-radius: 8px;
   color: var(--text-primary);
+  font-family: inherit;
 }
 
-.ime-line.ime-converted {
-  color: var(--accent);
+.ime-input:focus {
+  outline: none;
   border-color: var(--accent);
 }
 
-.ime-phase-hint {
-  text-align: center;
-  font-size: 13px;
-  color: var(--accent);
-  font-weight: 500;
-  margin: 0 0 0.75rem;
+.ime-input.ime-wrong {
+  border-color: var(--danger, #e5484d);
+  animation: ime-shake 0.15s ease-in-out 0s 2;
+}
+
+@keyframes ime-shake {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(4px); }
 }
 
 .focus-hint {
