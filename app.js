@@ -3,6 +3,7 @@ const DURATION_OPTIONS = [30, 60, 90, 120];
 const DEFAULT_DURATION = 30;
 
 const state = {
+  genre: "difficulty", // "difficulty": 難易度別セット / "business": よく使うビジネス用語50
   difficulty: "easy",
   duration: DEFAULT_DURATION,
   conversionMode: "off", // "off": 変換なし(ローマ字を直接判定) / "on": 変換あり(実際のIMEで<input>に入力)
@@ -23,6 +24,8 @@ const els = {
   startBtn: document.getElementById("start-btn"),
   backBtn: document.getElementById("back-btn"),
   difficultyButtons: document.querySelectorAll(".difficulty-btn"),
+  difficultySettingBlock: document.getElementById("difficulty-setting-block"),
+  genreButtons: document.querySelectorAll(".genre-btn"),
   durationButtons: document.querySelectorAll(".duration-btn"),
   modeButtons: document.querySelectorAll(".mode-btn"),
   displayLine: document.getElementById("display-line"),
@@ -199,7 +202,7 @@ function nextItem() {
 }
 
 function startRound() {
-  state.pool = SENTENCE_SETS[state.difficulty];
+  state.pool = state.genre === "business" ? BUSINESS_SENTENCES : SENTENCE_SETS[state.difficulty];
   state.queue = shuffle(state.pool);
   state.startTime = null;
   state.roundOver = false;
@@ -328,6 +331,15 @@ els.difficultyButtons.forEach(btn => {
     els.difficultyButtons.forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     state.difficulty = btn.dataset.difficulty;
+  });
+});
+
+els.genreButtons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    els.genreButtons.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    state.genre = btn.dataset.genre;
+    els.difficultySettingBlock.style.display = state.genre === "business" ? "none" : "block";
   });
 });
 
