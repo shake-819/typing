@@ -15,6 +15,10 @@ const state = {
 };
 
 const els = {
+  setupScreen: document.getElementById("setup-screen"),
+  practiceScreen: document.getElementById("practice-screen"),
+  startBtn: document.getElementById("start-btn"),
+  backBtn: document.getElementById("back-btn"),
   difficultyButtons: document.querySelectorAll(".difficulty-btn"),
   durationButtons: document.querySelectorAll(".duration-btn"),
   displayLine: document.getElementById("display-line"),
@@ -230,7 +234,6 @@ els.difficultyButtons.forEach(btn => {
     els.difficultyButtons.forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     state.difficulty = btn.dataset.difficulty;
-    startRound();
   });
 });
 
@@ -239,9 +242,25 @@ els.durationButtons.forEach(btn => {
     els.durationButtons.forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     state.duration = parseInt(btn.dataset.duration, 10);
-    startRound();
   });
 });
+
+function showSetupScreen() {
+  clearInterval(state.timerId);
+  state.roundOver = true;
+  els.practiceScreen.style.display = "none";
+  els.setupScreen.style.display = "block";
+  renderWeakKeys();
+}
+
+function showPracticeScreen() {
+  els.setupScreen.style.display = "none";
+  els.practiceScreen.style.display = "block";
+  startRound();
+}
+
+els.startBtn.addEventListener("click", showPracticeScreen);
+els.backBtn.addEventListener("click", showSetupScreen);
 
 els.restartBtn.addEventListener("click", startRound);
 
@@ -254,4 +273,3 @@ window.addEventListener("keydown", handleKeydown);
 window.addEventListener("keydown", () => { els.focusHint.style.display = "none"; }, { once: false });
 
 renderWeakKeys();
-startRound();
