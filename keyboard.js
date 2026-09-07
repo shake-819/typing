@@ -91,14 +91,27 @@ class Keyboard {
   }
 
   highlightExpected(keys) {
-    Object.values(this.keyEls).flat().forEach(el => el.classList.remove("kb-key-expected"));
-    this.shiftEls.forEach(el => el.classList.remove("kb-key-shift-hint"));
+    if (this._lastExpectedEls) {
+      this._lastExpectedEls.forEach(el => el.classList.remove("kb-key-expected"));
+    }
+    if (this._lastShiftHinted) {
+      this.shiftEls.forEach(el => el.classList.remove("kb-key-shift-hint"));
+    }
 
+    const expectedEls = [];
+    let needsShiftHint = false;
     keys.forEach(rawKey => {
       const { els, needsShift } = this._resolveKeyEls(rawKey);
-      els.forEach(el => el.classList.add("kb-key-expected"));
-      if (needsShift) this.shiftEls.forEach(el => el.classList.add("kb-key-shift-hint"));
+      els.forEach(el => {
+        el.classList.add("kb-key-expected");
+        expectedEls.push(el);
+      });
+      if (needsShift) needsShiftHint = true;
     });
+    if (needsShiftHint) this.shiftEls.forEach(el => el.classList.add("kb-key-shift-hint"));
+
+    this._lastExpectedEls = expectedEls;
+    this._lastShiftHinted = needsShiftHint;
   }
 
   flashMiss(rawKey) {
