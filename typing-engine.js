@@ -1,3 +1,11 @@
+// エンジンが受け付ける1キー分の入力かどうかを判定する。
+// スペース(0x20)〜チルダ(0x7e)の印字可能なASCII文字全体を許可することで、
+// ローマ字(かな入力)だけでなく、JS構文のような半角記号・数字・大文字を
+// 含む文字列もそのまま入力対象にできる。
+function isTypableKey(key) {
+  return typeof key === "string" && key.length === 1 && key >= " " && key <= "~";
+}
+
 // かな文字列を「入力単位(モーラ)」の配列に分解する。
 // っ(促音)は次のモーラの子音を重ねたパターンに変換し、
 // ん は次の文字に応じて "n" 単独が使えるかどうかを切り替える。
@@ -51,7 +59,10 @@ function segmentKana(kanaStr) {
 }
 
 class TypingEngine {
-  constructor(kanaStr) {
+  // options.caseSensitive: true にすると大文字・小文字を区別して判定する
+  // (JS構文モードなど)。false(既定値)ではローマ字入力と同様、
+  // 常に小文字に変換してから判定する。
+  constructor(kanaStr, options = {}) {
     this.units = segmentKana(kanaStr);
     this.currentUnitIndex = 0;
     this.typedBuffer = "";
@@ -59,6 +70,7 @@ class TypingEngine {
     this.missKeystrokes = 0;
     this.keyMissMap = {};
     this.keyAttemptMap = {};
+    this.caseSensitive = !!options.caseSensitive;
   }
 
   get isDone() {
@@ -87,8 +99,8 @@ class TypingEngine {
 
   // 1キー入力を処理する。戻り値: "progress" | "unit-complete" | "miss" | "ignored"
   handleKey(rawKey) {
-    const key = rawKey.toLowerCase();
-    if (!/^[a-z!?\-']$/.test(key)) return { result: "ignored" };
+    if (!isTypableKey(rawKey)) return { result: "ignored" };
+    const key = this.caseSensitive ? rawKey : rawKey.toLowerCase();
     if (this.isDone) return { result: "ignored" };
 
     const unit = this.currentUnit;
