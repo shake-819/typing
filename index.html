@@ -53,6 +53,7 @@
           <button class="duration-btn" data-duration="60">60秒</button>
           <button class="duration-btn" data-duration="90">90秒</button>
           <button class="duration-btn" data-duration="120">120秒</button>
+          <button class="duration-btn" data-duration="unlimited">無制限</button>
         </div>
       </div>
 
@@ -96,13 +97,13 @@
           <button id="restart-btn" class="primary-btn">もう一度</button>
         </div>
 
-        <div class="stats-grid">
+        <div class="stats-grid" id="stats-grid">
           <div class="stat-box">
             <p class="stat-label">速度</p>
             <p class="stat-value" id="speed-out">0.0<span class="unit-label"> 打/秒</span></p>
           </div>
           <div class="stat-box">
-            <p class="stat-label">残り時間</p>
+            <p class="stat-label" id="time-label">残り時間</p>
             <p class="stat-value" id="time-out">0.0<span class="unit-label"> 秒</span></p>
           </div>
           <div class="stat-box">
