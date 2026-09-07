@@ -56,8 +56,65 @@ const SENTENCE_SETS = {
     { display: "給食", kana: "きゅうしょく" },
     { display: "出張", kana: "しゅっちょう" },
     { display: "冷蔵庫", kana: "れいぞうこ" },
-    { display: "財産", kana: "ざいさん" }
+    { display: "財産", kana: "ざいさん" },
+
+    { display: "パン", kana: "ぱん" },
+    { display: "りんご", kana: "りんご" },
+    { display: "みかん", kana: "みかん" },
+    { display: "ケーキ", kana: "けーき" },
+    { display: "カレー", kana: "かれー" },
+    { display: "ラーメン", kana: "らーめん" },
+    { display: "うさぎ", kana: "うさぎ" },
+    { display: "鳥", kana: "とり" },
+    { display: "魚", kana: "さかな" },
+    { display: "パンダ", kana: "ぱんだ" },
+
+    { display: "先生", kana: "せんせい" },
+    { display: "生徒", kana: "せいと" },
+    { display: "宿題", kana: "しゅくだい" },
+    { display: "本", kana: "ほん" },
+    { display: "机", kana: "つくえ" },
+    { display: "時計", kana: "とけい" },
+    { display: "鍵", kana: "かぎ" },
+    { display: "鞄", kana: "かばん" },
+    { display: "靴", kana: "くつ" },
+    { display: "携帯", kana: "けいたい" },
+
+    { display: "公園", kana: "こうえん" },
+    { display: "図書館", kana: "としょかん" },
+    { display: "駅", kana: "えき" },
+    { display: "郵便局", kana: "ゆうびんきょく" },
+    { display: "銀行", kana: "ぎんこう" },
+    { display: "飛行機", kana: "ひこうき" },
+    { display: "車", kana: "くるま" },
+    { display: "信号", kana: "しんごう" },
+    { display: "道路", kana: "どうろ" },
+    { display: "旅行", kana: "りょこう" },
+
+    { display: "海", kana: "うみ" },
+    { display: "川", kana: "かわ" },
+    { display: "森", kana: "もり" },
+    { display: "太陽", kana: "たいよう" },
+    { display: "虹", kana: "にじ" },
+    { display: "雲", kana: "くも" },
+    { display: "朝", kana: "あさ" },
+    { display: "夜", kana: "よる" },
+
+    { display: "野球", kana: "やきゅう" },
+    { display: "サッカー", kana: "さっかー" },
+    { display: "水泳", kana: "すいえい" },
+    { display: "卓球", kana: "たっきゅう" },
+
+    { display: "笑顔", kana: "えがお" },
+    { display: "勇気", kana: "ゆうき" },
+    { display: "希望", kana: "きぼう" },
+    { display: "挑戦", kana: "ちょうせん" },
+    { display: "約束", kana: "やくそく" },
+    { display: "準備", kana: "じゅんび" },
+    { display: "集中", kana: "しゅうちゅう" },
+    { display: "発見", kana: "はっけん" }
   ],
+
   normal: [
     { display: "今日はいい天気です", kana: "きょうはいいてんきです" },
     { display: "学校に行ってきます", kana: "がっこうにいってきます" },
@@ -110,6 +167,7 @@ const SENTENCE_SETS = {
     { display: "どこに行きたいですか？", kana: "どこにいきたいですか？" },
     { display: "また明日会いましょう", kana: "またあしたあいましょう" }
   ],
+
   hard: [
     { display: "タイピングの練習を毎日続けることが上達への近道です", kana: "たいぴんぐのれんしゅうをまいにちつづけることがじょうたつへのちかみちです" },
     { display: "継続は力なりという言葉を信じて努力を重ねる", kana: "けいぞくはちからなりということばをしんじてどりょくをかさねる" },
