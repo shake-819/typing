@@ -1,40 +1,36 @@
 /* ==========================================================================
-   タイピング練習 — スタイル定義
-   コンセプト: 物理キーボードの打鍵感をそのままUIに持ち込む「コンソール」テーマ。
-   これまで設定画面(白背景)とキーボード(黒背景)で世界観が分裂していたのを、
-   ダーク基調 + 琥珀色のキーキャップ発光色で全体を統一している。
+   タイピング練習 — スタイル定義(ライト基調・視認性/操作性優先)
+   方針:
+   - 設定項目ごとに枠付きカードで区切り、何をどこまで選ぶのか一目で分かるようにする
+   - 選択状態は色だけでなくチェックマークでも示す
+   - 横幅に余裕がある画面では設定カードを2列に整理し、縦スクロールを減らす
+   - 「はじめる」ボタンは追従(sticky)させ、迷わず押せる位置に保つ
    ========================================================================== */
 
 :root {
-  /* ベースカラー: 深い紺黒 */
-  --bg: #14151c;
-  --surface: #1b1d27;
-  --surface-muted: #242633;
-  --surface-raised: #2a2c3b;
-  --border: #34364a;
-  --border-strong: #454863;
+  --bg: #f6f6f4;
+  --surface: #ffffff;
+  --surface-muted: #f0f1ee;
+  --border: #e2e3dd;
+  --border-strong: #cfd0c8;
 
-  /* テキスト */
-  --text-primary: #eef0f6;
-  --text-secondary: #9497b0;
-  --text-muted: #62647c;
+  --text-primary: #1e1f1c;
+  --text-secondary: #5a5b56;
+  --text-muted: #8c8d86;
 
-  /* アクセント: バックライトキーボードの琥珀色 */
-  --accent: #ffab3d;
-  --accent-strong: #ffc773;
-  --accent-ink: #241705;
-  --accent-bg: rgba(255, 171, 61, 0.12);
+  /* アクセント: キーキャップの琥珀色を、白背景でも読みやすい濃さに調整 */
+  --accent: #e08114;
+  --accent-ink: #2a1500;
+  --accent-bg: #fdf1de;
 
-  --success: #4ade80;
-  --success-ink: #06210f;
-  --success-bg: rgba(74, 222, 128, 0.12);
+  --success: #1f9d55;
+  --success-bg: #e8f6ee;
+  --danger: #d64545;
+  --danger-bg: #fceaea;
 
-  --danger: #f2695c;
-  --danger-bg: rgba(242, 105, 92, 0.14);
-
-  --radius-sm: 6px;
-  --radius: 10px;
-  --radius-lg: 16px;
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 18px;
 
   --font-sans: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: "JetBrains Mono", "SF Mono", "Menlo", "Consolas", monospace;
@@ -45,9 +41,7 @@
 body {
   margin: 0;
   font-family: var(--font-sans);
-  background:
-    radial-gradient(circle at 15% -10%, rgba(255, 171, 61, 0.06), transparent 45%),
-    var(--bg);
+  background: var(--bg);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
 }
@@ -56,130 +50,126 @@ body {
   * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
 }
 
-/* 全てのフォーカス可能要素に、視認できるフォーカスリングを統一で付与 */
 button:focus-visible,
-input:focus-visible {
+input:focus-visible,
+summary:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
 .app {
-  max-width: 660px;
+  max-width: 760px;
   margin: 0 auto;
-  padding: 2.5rem 1.25rem 4rem;
+  padding: 2rem 1.25rem 3rem;
 }
 
 /* ---------------------------- ヘッダー ---------------------------- */
 
-.app-header {
-  text-align: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px dashed var(--border);
-}
-
-.app-header h1 {
-  font-family: var(--font-mono);
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  margin: 0 0 6px;
-}
-
-.subtitle {
-  color: var(--text-secondary);
-  font-size: 13.5px;
-  margin: 0;
-}
+.app-header { text-align: center; margin-bottom: 1.75rem; }
+.app-header h1 { font-size: 24px; font-weight: 700; margin: 0 0 4px; }
+.subtitle { color: var(--text-secondary); font-size: 14px; margin: 0; }
 
 /* ---------------------------- 設定画面 ---------------------------- */
 
-.setting-block { margin-bottom: 1.75rem; }
-
-.setting-label {
-  text-align: center;
-  font-size: 12.5px;
-  color: var(--text-secondary);
-  margin: 0 0 10px;
-  font-family: var(--font-mono);
-  letter-spacing: 0.02em;
+#setup-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.setting-label::before {
-  content: ">";
-  color: var(--accent);
-  margin-right: 6px;
+/* 各設定項目を独立したカードにして境界をはっきりさせる */
+.setting-block {
+  margin: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem 1.15rem;
+}
+
+.setting-label {
+  text-align: left;
+  font-size: 14px;
   font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 10px;
 }
 
 .difficulty-bar {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  justify-content: center;
+  justify-content: flex-start;
   margin-bottom: 0;
 }
 
-/* ボタン群はキーボードの「キー」を模した見た目にする:
-   わずかな厚み(下方向のシャドウ)を付け、押すと沈み込むようにする */
 .difficulty-btn, .duration-btn, .mode-btn, .genre-btn {
-  padding: 9px 18px;
+  padding: 9px 16px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-strong);
-  background: var(--surface-raised);
+  background: var(--surface);
   color: var(--text-secondary);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
-  transition: transform 0.08s ease, box-shadow 0.08s ease, border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
 }
 
 .difficulty-btn:hover, .duration-btn:hover, .mode-btn:hover, .genre-btn:hover {
   border-color: var(--accent);
-  color: var(--text-primary);
-}
-
-.difficulty-btn:active, .duration-btn:active, .mode-btn:active, .genre-btn:active {
-  transform: translateY(2px);
-  box-shadow: none;
+  color: var(--accent-ink);
+  background: var(--accent-bg);
 }
 
 .difficulty-btn.active, .duration-btn.active, .mode-btn.active, .genre-btn.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: var(--accent-ink);
+  color: #fff;
   font-weight: 700;
-  box-shadow: 0 0 0 1px var(--accent), 0 0 14px rgba(255, 171, 61, 0.35);
 }
 
+/* 色だけに頼らず、チェックマークでも選択中を示す */
+.difficulty-btn.active::before, .duration-btn.active::before,
+.mode-btn.active::before, .genre-btn.active::before {
+  content: "✓ ";
+}
+
+/* 「はじめる」ボタン: スクロールしても追従させ、常に押せる位置に保つ */
 .start-btn {
+  position: sticky;
+  bottom: 14px;
+  z-index: 5;
   display: block;
   width: 100%;
-  max-width: 300px;
-  margin: 2rem auto 2.5rem;
+  margin: 4px auto 0;
   padding: 15px;
   border-radius: var(--radius);
-  border: 1px solid var(--accent);
+  border: none;
   background: var(--accent);
-  color: var(--accent-ink);
+  color: #fff;
   font-size: 16px;
   font-weight: 700;
-  font-family: var(--font-mono);
-  letter-spacing: 0.02em;
   cursor: pointer;
-  box-shadow: 0 3px 0 rgba(191, 118, 15, 0.65), 0 0 20px rgba(255, 171, 61, 0.25);
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
+  box-shadow: 0 4px 14px rgba(224, 129, 20, 0.35);
+  transition: box-shadow 0.15s ease, transform 0.08s ease;
 }
 
-.start-btn:hover { box-shadow: 0 3px 0 rgba(191, 118, 15, 0.65), 0 0 26px rgba(255, 171, 61, 0.4); }
+.start-btn:hover { box-shadow: 0 6px 18px rgba(224, 129, 20, 0.42); }
+.start-btn:active { transform: translateY(1px); }
 
-.start-btn:active {
-  transform: translateY(3px);
-  box-shadow: 0 0 14px rgba(255, 171, 61, 0.3);
+.back-btn { display: inline-block; margin-bottom: 1.1rem; }
+
+/* PC幅: 設定カードを2列に並べて一覧性を上げる */
+@media (min-width: 640px) {
+  #setup-screen {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    align-items: start;
+  }
+  .start-btn, .weak-key-panel {
+    grid-column: 1 / -1;
+  }
 }
-
-.back-btn { display: inline-block; margin-bottom: 1.25rem; }
 
 /* ---------------------------- 練習画面 ---------------------------- */
 
@@ -192,15 +182,14 @@ input:focus-visible {
 
 .progress-label {
   text-align: center;
-  font-size: 12.5px;
-  font-family: var(--font-mono);
+  font-size: 13px;
   color: var(--text-secondary);
-  margin: 0 0 1.1rem;
+  margin: 0 0 1rem;
 }
 
 .display-line {
   text-align: center;
-  font-size: 23px;
+  font-size: 22px;
   font-weight: 600;
   color: var(--text-primary);
   margin: 0 0 0.75rem;
@@ -213,7 +202,7 @@ input:focus-visible {
   font-size: 20px;
   font-weight: 500;
   letter-spacing: 0.5px;
-  margin-bottom: 1.1rem;
+  margin-bottom: 1rem;
   min-height: 28px;
   word-break: break-all;
   line-height: 1.6;
@@ -221,7 +210,7 @@ input:focus-visible {
 
 .romaji-done { color: var(--success); }
 .romaji-current {
-  color: var(--accent-ink);
+  color: #fff;
   background: var(--accent);
   font-weight: 700;
   border-radius: 3px;
@@ -237,16 +226,14 @@ input:focus-visible {
   font-size: 22px;
   font-weight: 600;
   min-height: 32px;
-  margin-bottom: 0.9rem;
-  padding: 0.6rem 0.8rem;
-  background: var(--surface-muted);
+  margin-bottom: 0.75rem;
+  padding: 0.55rem 0.8rem;
+  background: var(--surface);
   border: 2px solid var(--border-strong);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   font-family: var(--font-mono);
 }
-
-.ime-input::placeholder { color: var(--text-muted); font-family: var(--font-sans); font-size: 14px; }
 
 .ime-input:focus {
   outline: none;
@@ -269,35 +256,31 @@ input:focus-visible {
   text-align: center;
   font-size: 13px;
   color: var(--text-muted);
-  margin-bottom: 1.1rem;
+  margin-bottom: 1rem;
 }
 
 .result-panel {
   text-align: center;
   background: var(--success-bg);
-  border: 1px solid rgba(74, 222, 128, 0.3);
   border-radius: var(--radius);
-  padding: 1.1rem;
-  margin-bottom: 1.1rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
 }
 
-.result-panel p { margin: 0 0 12px; color: var(--success); font-weight: 600; }
+.result-panel p { margin: 0 0 10px; color: var(--success); font-weight: 600; }
 
 .primary-btn {
   background: var(--accent);
-  color: var(--accent-ink);
+  color: #fff;
   border: none;
   border-radius: var(--radius-sm);
   padding: 9px 22px;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 2px 0 rgba(191, 118, 15, 0.65);
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
 }
 
-.primary-btn:hover { box-shadow: 0 2px 0 rgba(191, 118, 15, 0.8); }
-.primary-btn:active { transform: translateY(2px); box-shadow: none; }
+.primary-btn:hover { opacity: 0.92; }
 
 .ghost-btn {
   background: transparent;
@@ -307,28 +290,26 @@ input:focus-visible {
   font-size: 13px;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease;
 }
 
-.ghost-btn:hover { border-color: var(--accent); color: var(--accent); }
+.ghost-btn:hover { border-color: var(--accent); color: var(--accent-ink); }
 
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
-  margin-bottom: 1.75rem;
+  margin-bottom: 1.5rem;
 }
 
 .stat-box {
   background: var(--surface-muted);
-  border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 12px 8px;
   text-align: center;
 }
 
-.stat-label { font-size: 11.5px; color: var(--text-secondary); margin: 0 0 5px; }
-.stat-value { font-size: 20px; font-weight: 700; margin: 0; font-family: var(--font-mono); color: var(--text-primary); }
+.stat-label { font-size: 12px; color: var(--text-secondary); margin: 0 0 4px; }
+.stat-value { font-size: 20px; font-weight: 700; margin: 0; font-family: var(--font-mono); }
 .unit-label { font-size: 11px; font-weight: 400; color: var(--text-secondary); }
 
 /* ---------------------------- 仮想キーボード ---------------------------- */
@@ -338,14 +319,13 @@ input:focus-visible {
   flex-direction: column;
   gap: 8px;
   align-items: center;
-  background: #0f1015;
-  border: 3px solid var(--border-strong);
-  border-radius: 20px;
+  background: #17181c;
+  border: 3px solid #3a3b40;
+  border-radius: 22px;
   padding: 18px 16px;
   width: fit-content;
   max-width: 100%;
   margin: 0 auto;
-  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.5);
 }
 
 .kb-row { display: flex; gap: 6px; }
@@ -354,19 +334,17 @@ input:focus-visible {
   min-width: 32px;
   height: 34px;
   padding: 0 6px;
-  border-radius: 6px;
-  background: #1a1b22;
-  border: 1px solid var(--border-strong);
-  border-bottom: 2px solid #050506;
+  border-radius: 7px;
+  background: #0a0a0c;
+  border: 2px solid #d7d8db;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  font-family: var(--font-mono);
   font-weight: 600;
-  color: #c7c8d6;
+  color: #e8e8ea;
   text-transform: uppercase;
-  transition: background-color 0.1s ease, border-color 0.1s ease, color 0.1s ease, transform 0.1s ease;
+  transition: background-color 0.1s ease, border-color 0.1s ease, color 0.1s ease;
   box-sizing: border-box;
 }
 
@@ -383,11 +361,9 @@ input:focus-visible {
 
 .kb-key-expected {
   background: var(--accent);
-  border-color: var(--accent-strong);
-  border-bottom-color: rgba(191, 118, 15, 0.8);
-  color: var(--accent-ink);
+  border-color: var(--accent);
+  color: #fff;
   font-weight: 700;
-  transform: translateY(1px);
 }
 
 .kb-key-shift-hint {
@@ -398,7 +374,7 @@ input:focus-visible {
 .kb-key-miss {
   background: var(--danger);
   border-color: var(--danger);
-  color: #2a0a06;
+  color: #fff;
 }
 
 @media (max-width: 480px) {
@@ -407,24 +383,53 @@ input:focus-visible {
   .keyboard-jis { padding: 12px 8px; }
 }
 
-/* ---------------------------- 苦手キー ---------------------------- */
+/* ---------------------------- 苦手キー(折りたたみ) ---------------------------- */
 
 .weak-key-panel {
-  margin-top: 1.75rem;
+  margin: 0;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 1.25rem 1.5rem;
+  border-radius: var(--radius);
+  padding: 0.85rem 1.1rem;
+}
+
+.weak-key-panel[open] { padding-bottom: 1.15rem; }
+
+.weak-key-panel summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-primary);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  padding: 0.15rem 0;
+}
+
+.weak-key-panel summary::-webkit-details-marker { display: none; }
+
+.weak-key-panel summary::before {
+  content: "▸";
+  display: inline-block;
+  margin-right: 8px;
+  color: var(--text-secondary);
+  transition: transform 0.15s ease;
+  font-size: 12px;
+}
+
+.weak-key-panel[open] summary::before {
+  transform: rotate(90deg);
 }
 
 .weak-key-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  gap: 12px;
+  margin: 12px 0 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
 }
-
-.weak-key-header h2 { font-size: 15.5px; font-weight: 700; margin: 0; }
 
 .weak-key-row {
   display: grid;
@@ -433,13 +438,13 @@ input:focus-visible {
   gap: 10px;
   margin-bottom: 8px;
   font-size: 13px;
-  font-family: var(--font-mono);
 }
 
 .weak-key-label {
   font-weight: 700;
   text-align: center;
   color: var(--text-primary);
+  font-family: var(--font-mono);
 }
 
 .weak-key-bar-track {
@@ -455,12 +460,11 @@ input:focus-visible {
   border-radius: 999px;
 }
 
-.weak-key-count { color: var(--text-secondary); text-align: right; }
+.weak-key-count { color: var(--text-secondary); text-align: right; font-family: var(--font-mono); }
 
 .muted-text { color: var(--text-muted); font-size: 13px; margin: 0; }
 
 @media (max-width: 480px) {
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
-  .app { padding: 1.75rem 1rem 3rem; }
   .practice-card { padding: 1.5rem 1rem; }
 }
