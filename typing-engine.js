@@ -103,21 +103,56 @@ class TypingEngine {
     const key = this.caseSensitive ? rawKey : rawKey.toLowerCase();
     if (this.isDone) return { result: "ignored" };
 
+    // 打鍵の集計(ミス率など)は実際に押されたキー1つにつき1回だけ数える。
+    // 「ん」の n/nn のように、内部的に前の単位へ確定処理を再帰させるケースが
+    // あるため、集計はここで一度だけ行い、判定本体は _processKey に任せる。
+    this.keyAttemptMap[key] = (this.keyAttemptMap[key] || 0) + 1;
+    return this._processKey(key);
+  }
+
+  // 実際の一致判定。「ん」の n のように、それ単体で完全一致しつつ
+  // さらに長いパターン(nn など)にも伸びうる場合は、即座に確定させず
+  // 一旦保留(progress)にする。次のキーがその保留を裏切ったときは、
+  // 保留していた分を確定させたうえで、同じキーを次の単位への入力として
+  // 再評価する(「n」+「き」→「ん」確定 → 「き」への入力として処理、など)。
+  _processKey(key) {
     const unit = this.currentUnit;
     const candidate = this.typedBuffer + key;
-    this.keyAttemptMap[key] = (this.keyAttemptMap[key] || 0) + 1;
 
-    if (unit.patterns.includes(candidate)) {
+    const isExactMatch = unit.patterns.includes(candidate);
+    const canExtend = unit.patterns.some(p => p.length > candidate.length && p.startsWith(candidate));
+
+    if (isExactMatch && !canExtend) {
       this.typedBuffer = "";
       this.correctKeystrokes++;
       this.currentUnitIndex++;
       return { result: "unit-complete", key };
     }
 
+    if (isExactMatch && canExtend) {
+      // 例: 「ん」で "n" を打った直後。"nn" になる可能性がまだ残っているので保留する。
+      this.typedBuffer = candidate;
+      this.correctKeystrokes++;
+      return { result: "progress", key };
+    }
+
     if (unit.patterns.some(p => p.startsWith(candidate))) {
       this.typedBuffer = candidate;
       this.correctKeystrokes++;
       return { result: "progress", key };
+    }
+
+    // 保留中だった入力(typedBuffer)がそれ単体で完全一致するパターンだった場合、
+    // ここで確定させ、今回のキーは次の単位への入力として再評価する。
+    if (this.typedBuffer && unit.patterns.includes(this.typedBuffer)) {
+      this.typedBuffer = "";
+      this.currentUnitIndex++;
+      if (this.isDone) {
+        this.missKeystrokes++;
+        this.keyMissMap[key] = (this.keyMissMap[key] || 0) + 1;
+        return { result: "miss", key };
+      }
+      return this._processKey(key);
     }
 
     this.missKeystrokes++;
