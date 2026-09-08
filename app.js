@@ -387,14 +387,15 @@ function finishRound() {
 // --- ランキング送信・表示 ---
 // 名前がまだ端末に保存されていない場合は先に名前入力フォームを出し、
 // 登録ボタンが押されたタイミングで初めて送信する。2回目以降は自動送信。
-function submitRankingResult(scoreInfo) {
+async function submitRankingResult(scoreInfo) {
   const mode = buildRankingMode(state);
   const existingName = getRankingName();
 
   if (existingName) {
     els.rankingNameSetup.style.display = "none";
-    saveScoreToRanking({ name: existingName, ...mode, ...scoreInfo });
+    await saveScoreToRanking({ name: existingName, ...mode, ...scoreInfo });
     renderRanking(mode, existingName);
+    renderGenreRankingOverview();
   } else {
     state.pendingRankingScore = { mode, scoreInfo };
     els.rankingPanel.style.display = "none";
@@ -422,7 +423,7 @@ async function renderRanking(mode, myName) {
     .join("");
 }
 
-els.rankingNameSaveBtn.addEventListener("click", () => {
+els.rankingNameSaveBtn.addEventListener("click", async () => {
   const name = els.rankingNameInput.value.trim();
   if (!name) {
     els.rankingNameInput.focus();
@@ -433,8 +434,9 @@ els.rankingNameSaveBtn.addEventListener("click", () => {
 
   const pending = state.pendingRankingScore;
   if (pending) {
-    saveScoreToRanking({ name, ...pending.mode, ...pending.scoreInfo });
+    await saveScoreToRanking({ name, ...pending.mode, ...pending.scoreInfo });
     renderRanking(pending.mode, name);
+    renderGenreRankingOverview();
     state.pendingRankingScore = null;
   }
 });
