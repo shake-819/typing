@@ -16,6 +16,19 @@
       <p class="subtitle">ローマ字入力の練習(変換なし/変換ありを選択可能)</p>
     </header>
 
+    <!-- ログインは任意。ログインすると記録がアカウントに紐付く。
+         ログインしなくても、今まで通り名前だけで練習・ランキング参加できる。 -->
+    <div class="auth-panel" id="auth-panel">
+      <p id="auth-status" class="auth-status">ログインしていません(名前だけでも練習できます)</p>
+      <div id="auth-form" class="auth-form">
+        <input type="email" id="auth-email" placeholder="メールアドレス" autocomplete="email" />
+        <input type="password" id="auth-password" placeholder="パスワード" autocomplete="current-password" />
+        <button type="button" id="auth-login-btn" class="ghost-btn">ログイン</button>
+      </div>
+      <button type="button" id="auth-logout-btn" class="ghost-btn" hidden>ログアウト</button>
+      <p id="auth-message" class="auth-message"></p>
+    </div>
+
     <!-- 設定画面: ジャンル・難易度・時間を選んでから練習を始める -->
     <section id="setup-screen" class="screen">
       <div class="setting-block">
@@ -233,6 +246,7 @@
   <script src="keyboard.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="ranking.js"></script>
+  <script src="auth.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
