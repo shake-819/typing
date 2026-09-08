@@ -102,7 +102,7 @@ summary:focus-visible {
   margin-bottom: 0;
 }
 
-.difficulty-btn, .duration-btn, .mode-btn, .genre-btn, .category-btn {
+.difficulty-btn, .duration-btn, .mode-btn, .genre-btn {
   padding: 9px 16px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-strong);
@@ -114,13 +114,13 @@ summary:focus-visible {
   transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
 }
 
-.difficulty-btn:hover, .duration-btn:hover, .mode-btn:hover, .genre-btn:hover, .category-btn:hover {
+.difficulty-btn:hover, .duration-btn:hover, .mode-btn:hover, .genre-btn:hover {
   border-color: var(--accent);
   color: var(--accent-ink);
   background: var(--accent-bg);
 }
 
-.difficulty-btn.active, .duration-btn.active, .mode-btn.active, .genre-btn.active, .category-btn.active {
+.difficulty-btn.active, .duration-btn.active, .mode-btn.active, .genre-btn.active {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
@@ -129,15 +129,82 @@ summary:focus-visible {
 
 /* 色だけに頼らず、チェックマークでも選択中を示す */
 .difficulty-btn.active::before, .duration-btn.active::before,
-.mode-btn.active::before, .genre-btn.active::before, .category-btn.active::before {
+.mode-btn.active::before, .genre-btn.active::before {
   content: "✓ ";
 }
 
-/* カテゴリバー(タイピング/ビジネス系/IT系/プログラミング)は少し太字にして
-   その下のサブジャンルバーとの階層関係を分かりやすくする */
-.category-btn { font-size: 15px; font-weight: 600; }
-.category-bar { margin-bottom: 10px; }
-.subgenre-bar { margin-top: 2px; }
+.subgenre-bar { margin-top: 10px; }
+
+/* カテゴリ選択: 単なる同形の錠剤ボタンだと見分けがつきにくいため、
+   ジャンルごとに異なるアイコン(形)を持つ正方形寄りのカードにして
+   一瞬で違いが見分けられるようにする。色だけに頼らないよう、
+   選択中はアイコンの図形自体に加えて隅のチェックバッジでも示す。 */
+.category-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.category-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 78px;
+  padding: 12px 6px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+}
+
+.category-icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.category-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  background: var(--accent-bg);
+}
+
+.category-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.category-btn.active::after {
+  content: "✓";
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+@media (max-width: 480px) {
+  .category-bar { grid-template-columns: repeat(2, 1fr); }
+}
 
 /* 「はじめる」ボタン: スクロールしても追従させ、常に押せる位置に保つ */
 .start-btn {
