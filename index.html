@@ -20,23 +20,29 @@
     <section id="setup-screen" class="screen">
       <div class="setting-block">
         <p class="setting-label">出題内容</p>
-        <div class="difficulty-bar">
-          <button class="genre-btn active" data-genre="difficulty">難易度から選ぶ</button>
-          <button class="genre-btn" data-genre="business">よく使うビジネス用語50</button>
-          <button class="genre-btn" data-genre="js">JS構文あるある50</button>
-          <button class="genre-btn" data-genre="sql">SQL構文あるある50</button>
-          <button class="genre-btn" data-genre="it">IT業界用語50</button>
-          <button class="genre-btn" data-genre="email">メール実務50</button>
-          <button class="genre-btn" data-genre="dev">IT実務会話50</button>
+        <div class="difficulty-bar category-bar" id="category-bar">
+          <button class="category-btn active" data-category="typing">タイピング</button>
+          <button class="category-btn" data-category="business">ビジネス系</button>
+          <button class="category-btn" data-category="it">IT系</button>
+          <button class="category-btn" data-category="programming">プログラミング</button>
         </div>
-      </div>
 
-      <div class="setting-block" id="difficulty-setting-block">
-        <p class="setting-label">難易度</p>
-        <div class="difficulty-bar">
-          <button class="difficulty-btn active" data-difficulty="easy">易しい</button>
-          <button class="difficulty-btn" data-difficulty="normal">ふつう</button>
-          <button class="difficulty-btn" data-difficulty="hard">難しい</button>
+        <div class="difficulty-bar subgenre-bar" data-category-group="typing">
+          <button class="genre-btn active" data-genre="difficulty" data-difficulty="easy">易しい</button>
+          <button class="genre-btn" data-genre="difficulty" data-difficulty="normal">ふつう</button>
+          <button class="genre-btn" data-genre="difficulty" data-difficulty="hard">難しい</button>
+        </div>
+        <div class="difficulty-bar subgenre-bar" data-category-group="business" style="display:none;">
+          <button class="genre-btn active" data-genre="business">ビジネス用語</button>
+          <button class="genre-btn" data-genre="email">メール</button>
+        </div>
+        <div class="difficulty-bar subgenre-bar" data-category-group="it" style="display:none;">
+          <button class="genre-btn active" data-genre="it">IT用語</button>
+          <button class="genre-btn" data-genre="dev">実務会話</button>
+        </div>
+        <div class="difficulty-bar subgenre-bar" data-category-group="programming" style="display:none;">
+          <button class="genre-btn active" data-genre="js">JS</button>
+          <button class="genre-btn" data-genre="sql">SQL</button>
         </div>
       </div>
 
