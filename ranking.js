@@ -34,6 +34,39 @@ async function getLinkedUserId() {
   }
 }
 
+// public.users からそのユーザーの表示名(name列)を取得する。無ければnull。
+// (auth.jsのヘッダー表示からも呼ばれる共通ヘルパー)
+async function fetchProfileName(userId) {
+  if (!rankingClient) return null;
+  try {
+    const { data, error } = await rankingClient
+      .from("users")
+      .select("name")
+      .eq("id", userId)
+      .single();
+    if (!error && data?.name) return data.name;
+  } catch (err) {
+    console.error("プロフィール名の取得に失敗しました", err);
+  }
+  return null;
+}
+
+// ログイン中なら、ランキングに使う名前として public.users.name を毎回取り直す。
+// (localStorageの古い名前より、そのときのプロフィール名を優先する)
+// ログインしていない・名前が取れない場合は null(呼び出し側で手入力にフォールバック)。
+async function getLinkedRankingName() {
+  if (!rankingClient) return null;
+  try {
+    const { data } = await rankingClient.auth.getUser();
+    const user = data?.user;
+    if (!user) return null;
+    return await fetchProfileName(user.id);
+  } catch (err) {
+    console.error("ログイン中の名前取得に失敗しました", err);
+    return null;
+  }
+}
+
 // genre="difficulty"(通常のひらがな/ローマ字打ち)のときだけdifficultyの区別が意味を持つ。
 // それ以外のジャンルは全員共通の問題セットなのでdifficultyは空文字にしておく(DB側もNOT NULL・空文字運用)。
 function buildRankingMode(state) {
