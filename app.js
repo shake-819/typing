@@ -304,6 +304,7 @@ function startRound() {
   const isKentei = isKenteiMode();
   const isConversion = state.conversionMode === "on";
   els.kenteiColumns.style.display = isKentei ? "flex" : "none";
+  document.body.classList.toggle("kentei-active", isKentei);
   els.displayLine.style.display = isKentei ? "none" : "block";
   els.imeInput.style.display = !isKentei && isConversion ? "block" : "none";
   els.romajiLine.style.display = !isKentei && !isConversion ? "block" : "none";
@@ -419,6 +420,7 @@ function handleImeKeydown(e) {
   } else {
     state.roundStats.miss++;
     els.imeInput.classList.add("ime-wrong");
+    els.imeInput.value = "";
     setTimeout(() => els.imeInput.classList.remove("ime-wrong"), 300);
     updateStatsDisplay();
   }
@@ -549,6 +551,7 @@ function showSetupScreen() {
   state.roundOver = true;
   els.practiceScreen.style.display = "none";
   els.setupScreen.style.display = "block";
+  document.body.classList.remove("kentei-active");
   renderWeakKeys();
 }
 
