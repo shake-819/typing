@@ -40,6 +40,7 @@ const els = {
   keyboardContainer: document.getElementById("keyboard"),
   statsGrid: document.getElementById("stats-grid"),
   timeLabel: document.getElementById("time-label"),
+  timerBadge: document.getElementById("timer-badge"),
   weakKeyList: document.getElementById("weak-key-list"),
   resetStatsBtn: document.getElementById("reset-stats-btn"),
   restartBtn: document.getElementById("restart-btn"),
@@ -172,6 +173,7 @@ function updateStatsDisplay() {
   els.timeOut.innerHTML = remaining.toFixed(1) + '<span class="unit-label"> 秒</span>';
   els.missOut.textContent = state.roundStats.miss;
   els.accuracyOut.innerHTML = accuracy.toFixed(0) + '<span class="unit-label">%</span>';
+  els.timerBadge.textContent = (isUnlimitedMode() ? "経過 " : "残り ") + remaining.toFixed(1) + "秒";
 }
 
 const STATS_UPDATE_INTERVAL_MS = 100;
@@ -232,6 +234,8 @@ function startRound() {
     : state.genre === "js" ? JS_SENTENCES
     : state.genre === "sql" ? SQL_SENTENCES
     : state.genre === "it" ? IT_SENTENCES
+    : state.genre === "email" ? EMAIL_SENTENCES
+    : state.genre === "dev" ? DEV_SENTENCES
     : SENTENCE_SETS[state.difficulty];
   state.queue = shuffle(state.pool);
   state.startTime = null;
@@ -372,7 +376,7 @@ els.genreButtons.forEach(btn => {
     els.genreButtons.forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     state.genre = btn.dataset.genre;
-    els.difficultySettingBlock.style.display = (state.genre === "business" || state.genre === "js" || state.genre === "sql" || state.genre === "it") ? "none" : "block";
+    els.difficultySettingBlock.style.display = (state.genre === "business" || state.genre === "js" || state.genre === "sql" || state.genre === "it" || state.genre === "email" || state.genre === "dev") ? "none" : "block";
   });
 });
 
