@@ -8,6 +8,7 @@ const state = {
   difficulty: "easy",
   duration: DEFAULT_DURATION,
   conversionMode: "off", // "off": 変換なし(ローマ字を直接判定) / "on": 変換あり(実際のIMEで<input>に入力)
+  punctuationMode: "on", // "on": ！？を含む問題も出題する / "off": ！？を含む問題を除外する
   currentItem: null,
   pool: [],
   queue: [],
@@ -30,6 +31,7 @@ const els = {
   genreButtons: document.querySelectorAll(".subgenre-bar .genre-btn"),
   durationButtons: document.querySelectorAll(".duration-btn"),
   modeButtons: document.querySelectorAll(".mode-btn"),
+  punctuationButtons: document.querySelectorAll(".punctuation-btn"),
   displayLine: document.getElementById("display-line"),
   romajiLine: document.getElementById("romaji-line"),
   imeInput: document.getElementById("ime-input"),
@@ -114,6 +116,16 @@ function renderWeakKeys() {
   });
 }
 
+// 1問あたりの文字数がこれを超えたら「長文」とみなし、中央揃えをやめて
+// 左揃え+自動スクロール追従に切り替える(ビジネス文書検定の速度問題など)。
+const LONG_TEXT_THRESHOLD = 60;
+
+function applyLongTextLayout(item) {
+  const isLong = item.kana.length > LONG_TEXT_THRESHOLD;
+  els.displayLine.classList.toggle("long-text", isLong);
+  els.romajiLine.classList.toggle("long-text", isLong);
+}
+
 // お題が変わったタイミングで1回だけ、モーラごとの入れ物(span)を作る。
 // 完了済み・未着手のモーラは以後書き換えないので、再描画コストがかからない。
 function buildRomajiLine() {
@@ -152,6 +164,12 @@ function updateCurrentUnitSpan() {
     .join("");
 
   keyboard.highlightExpected(engine.nextExpectedKeys());
+
+  // 長文では現在位置が画面外に出ることがあるため、追従スクロールする。
+  // (短文では常に画面内に収まっているので実質何もしない)
+  if (els.romajiLine.classList.contains("long-text")) {
+    span.scrollIntoView({ block: "center", behavior: "smooth" });
+  }
 }
 
 // 1モーラ打ち終えたタイミングで、そのモーラの表示を確定させ、次のモーラへ移る。
@@ -224,6 +242,7 @@ function nextItem() {
   state.currentItem = item;
   els.displayLine.textContent = item.display;
   els.progressLabel.textContent = `${state.roundStats.itemsDone + 1}問目`;
+  applyLongTextLayout(item);
 
   if (state.conversionMode === "on") {
     els.imeInput.value = "";
@@ -243,6 +262,14 @@ function startRound() {
     : state.genre === "email" ? EMAIL_SENTENCES
     : state.genre === "dev" ? DEV_SENTENCES
     : SENTENCE_SETS[state.difficulty];
+
+  // 「！？を除く」設定の場合、感嘆符・疑問符を含む問題をプールから取り除く。
+  // (対象ジャンル内に該当問題が1つもない場合はそのまま全件を使う)
+  if (state.punctuationMode === "off") {
+    const filtered = state.pool.filter(item => !/[！？]/.test(item.kana));
+    if (filtered.length > 0) state.pool = filtered;
+  }
+
   state.queue = shuffle(state.pool);
   state.startTime = null;
   state.roundOver = false;
@@ -420,6 +447,14 @@ els.modeButtons.forEach(btn => {
     els.modeButtons.forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     state.conversionMode = btn.dataset.mode;
+  });
+});
+
+els.punctuationButtons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    els.punctuationButtons.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    state.punctuationMode = btn.dataset.punctuation;
   });
 });
 
