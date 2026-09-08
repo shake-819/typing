@@ -144,7 +144,10 @@ class TypingEngine {
       this.typedBuffer = "";
       this.correctKeystrokes++;
       this.currentUnitIndex++;
-      return { result: "unit-complete", key };
+      // 実際に打ち切ったパターン文字列(例: きゃ→kixya)を、表示確定用に返す。
+      // 呼び出し側は本来の代表パターン(patterns[0])ではなく、これを
+      // 表示に使うことで「実際に入力した通り」の見た目にできる。
+      return { result: "unit-complete", key, completedText: candidate };
     }
 
     if (isExactMatch && canExtend) {
