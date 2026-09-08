@@ -21,6 +21,19 @@ function setRankingName(name) {
   localStorage.setItem(RANKING_NAME_KEY, name);
 }
 
+// 別サイト(クイズサイト)と同じSupabaseプロジェクトのアカウントでログインしていれば、
+// そのユーザーIDを記録に紐付ける。ログインしていなければ null(=匿名プレイ)。
+async function getLinkedUserId() {
+  if (!rankingClient) return null;
+  try {
+    const { data } = await rankingClient.auth.getUser();
+    return data?.user?.id || null;
+  } catch (err) {
+    console.error("ログイン状態の確認に失敗しました", err);
+    return null;
+  }
+}
+
 // genre="difficulty"(通常のひらがな/ローマ字打ち)のときだけdifficultyの区別が意味を持つ。
 // それ以外のジャンルは全員共通の問題セットなのでdifficultyは空文字にしておく(DB側もNOT NULL・空文字運用)。
 function buildRankingMode(state) {
@@ -43,6 +56,7 @@ async function saveScoreToRanking({ name, genre, difficulty, duration, speed, ac
       p_speed: speed,
       p_accuracy: accuracy,
       p_miss: miss,
+      p_user_id: await getLinkedUserId(),
     });
     if (error) throw error;
   } catch (err) {
