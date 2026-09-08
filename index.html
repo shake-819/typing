@@ -62,6 +62,7 @@
         <div class="difficulty-bar subgenre-bar" data-category-group="business" style="display:none;">
           <button class="genre-btn active" data-genre="business">ビジネス用語</button>
           <button class="genre-btn" data-genre="email">メール</button>
+          <button class="genre-btn" data-genre="kentei">検定(速度)</button>
         </div>
         <div class="difficulty-bar subgenre-bar" data-category-group="it" style="display:none;">
           <button class="genre-btn active" data-genre="it">IT用語</button>
@@ -73,11 +74,19 @@
         </div>
       </div>
 
-      <div class="setting-block">
+      <div class="setting-block" id="mode-setting-block">
         <p class="setting-label">入力モード</p>
         <div class="difficulty-bar">
           <button class="mode-btn active" data-mode="off">変換なし</button>
           <button class="mode-btn" data-mode="on">変換あり</button>
+        </div>
+      </div>
+
+      <div class="setting-block">
+        <p class="setting-label">記号問題</p>
+        <div class="difficulty-bar">
+          <button class="punctuation-btn active" data-punctuation="on">！？を含める</button>
+          <button class="punctuation-btn" data-punctuation="off">！？を除く</button>
         </div>
       </div>
 
@@ -88,6 +97,7 @@
           <button class="duration-btn" data-duration="60">60秒</button>
           <button class="duration-btn" data-duration="90">90秒</button>
           <button class="duration-btn" data-duration="120">120秒</button>
+          <button class="duration-btn" data-duration="600">10分</button>
           <button class="duration-btn" data-duration="unlimited">無制限</button>
         </div>
       </div>
@@ -128,6 +138,30 @@
           style="display:none;"
         />
 
+        <!-- 検定(速度)モード専用: 左に問題文(読みは出さない)、右に
+             実際のWordの入力画面をイメージした用紙風の入力欄を並べる。
+             genre が "kentei" のときだけ app.js から表示を切り替える。 -->
+        <div class="kentei-columns" id="kentei-columns" style="display:none;">
+          <div class="kentei-problem-pane">
+            <p class="kentei-pane-label">問題文</p>
+            <p class="kentei-problem-text" id="kentei-problem-text"></p>
+          </div>
+          <div class="kentei-word-pane">
+            <div class="kentei-word-toolbar">
+              <span></span><span></span><span></span>
+            </div>
+            <textarea
+              id="kentei-input"
+              class="kentei-input"
+              autocomplete="off"
+              autocorrect="off"
+              autocapitalize="off"
+              spellcheck="false"
+              placeholder="ここに入力してください(IMEで変換できます)"
+            ></textarea>
+          </div>
+        </div>
+
         <p class="focus-hint" id="focus-hint">キーボードで入力を開始してください</p>
 
         <div class="result-panel" id="result-panel" style="display:none;">
@@ -167,6 +201,7 @@
   <script src="it-sentences.js"></script>
   <script src="email-sentences.js"></script>
   <script src="dev-sentences.js"></script>
+  <script src="kentei-sentences.js"></script>
   <script src="typing-engine.js"></script>
   <script src="keyboard.js"></script>
   <script src="app.js"></script>
