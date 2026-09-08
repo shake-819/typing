@@ -477,6 +477,39 @@ body.kentei-active .app {
   box-shadow: inset 0 0 0 2px var(--accent-bg);
 }
 
+/* 完了後に表示する採点結果。入力欄と同じ見た目にして、そのまま置き換わって見えるようにする */
+.kentei-result-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-y: auto;
+}
+
+.kentei-char-wrong {
+  color: #d1332e;
+  background: rgba(209, 51, 46, 0.12);
+  border-radius: 2px;
+}
+
+.kentei-char-missing {
+  color: #d1332e;
+  text-decoration: underline dashed;
+  text-decoration-thickness: 1.5px;
+}
+
+.kentei-char-extra {
+  color: #d1332e;
+  background: rgba(209, 51, 46, 0.12);
+  text-decoration: line-through;
+}
+
+.kentei-word-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-muted);
+}
+
 @media (max-width: 640px) {
   .kentei-columns { flex-direction: column; }
 }
