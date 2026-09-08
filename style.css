@@ -1,39 +1,69 @@
 /* ==========================================================================
-   タイピング練習 — スタイル定義(ライト基調・視認性/操作性優先)
-   方針:
-   - 設定項目ごとに枠付きカードで区切り、何をどこまで選ぶのか一目で分かるようにする
-   - 選択状態は色だけでなくチェックマークでも示す
-   - 横幅に余裕がある画面では設定カードを2列に整理し、縦スクロールを減らす
-   - 「はじめる」ボタンは追従(sticky)させ、迷わず押せる位置に保つ
+   タイピング練習 — スタイル定義
+   コンセプト:
+   - 上半分は「原稿用紙(げんこうようし)に書かれた練習帳」を模したクラフト紙の見た目
+     日本語のタイピング検定・ワープロ検定の練習プリントを下敷きにしている
+   - 見出し脇の朱色の印は「練習中」を示す検定っぽいスタンプ
+   - 下半分の仮想キーボードは実機の黒いメカニカルキーボードそのままの質感で、
+     「紙の原稿」と「手元のキーボード」という練習に実在する2つのモノを
+     藍色(インディゴ)の差し色で橋渡しする
    ========================================================================== */
 
 :root {
-  --bg: #f6f6f4;
-  --surface: #ffffff;
-  --surface-muted: #f0f1ee;
-  --border: #e2e3dd;
-  --border-strong: #cfd0c8;
+  /* 机(デスクマット)の色。カードより一段暗いクラフト紙寄りのトーン */
+  --desk: #e6dfc9;
+  --desk-line: rgba(74, 61, 38, 0.08);
 
-  --text-primary: #1e1f1c;
-  --text-secondary: #5a5b56;
-  --text-muted: #8c8d86;
+  /* 原稿用紙そのもの */
+  --paper: #faf7ee;
+  --paper-soft: #f1ecdd;
+  --rule: #ddd3b8;
+  --rule-strong: #c9bd9c;
 
-  /* アクセント: キーキャップの琥珀色を、白背景でも読みやすい濃さに調整 */
-  --accent: #e08114;
-  --accent-ink: #2a1500;
-  --accent-bg: #fdf1de;
+  --ink: #2b2620;
+  --ink-soft: #6b6152;
+  --ink-faint: #9c9382;
 
-  --success: #1f9d55;
-  --success-bg: #e8f6ee;
-  --danger: #d64545;
-  --danger-bg: #fceaea;
+  /* 藍色(あいいろ)。実際の万年筆インクや検定合格印の紺色から */
+  --indigo: #2c4a68;
+  --indigo-deep: #16283b;
+  --indigo-bg: #e7edf2;
 
-  --radius-sm: 8px;
-  --radius: 12px;
-  --radius-lg: 18px;
+  /* 朱色(しゅいろ)。ハンコ・添削の赤ペンから */
+  --stamp: #a8402a;
+  --stamp-bg: #f6e6df;
 
-  --font-sans: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", -apple-system, BlinkMacSystemFont, sans-serif;
+  --ok: #386641;
+  --ok-bg: #e9f0e6;
+  --miss: #b23a2c;
+  --miss-bg: #f8e6e1;
+
+  --r-paper: 3px;
+  --r-key: 7px;
+  --r-tab: 9px 9px 0 0;
+
+  --font-serif: "Shippori Mincho", "Hiragino Mincho ProN", serif;
+  --font-sans: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
   --font-mono: "JetBrains Mono", "SF Mono", "Menlo", "Consolas", monospace;
+
+  /* 旧変数名の互換(仮想キーボード等で使用) */
+  --accent: var(--indigo);
+  --accent-ink: var(--indigo-deep);
+  --accent-bg: var(--indigo-bg);
+  --success: var(--ok);
+  --success-bg: var(--ok-bg);
+  --danger: var(--miss);
+  --danger-bg: var(--miss-bg);
+  --border: var(--rule);
+  --border-strong: var(--rule-strong);
+  --surface: var(--paper);
+  --surface-muted: var(--paper-soft);
+  --text-primary: var(--ink);
+  --text-secondary: var(--ink-soft);
+  --text-muted: var(--ink-faint);
+  --radius-sm: var(--r-key);
+  --radius: 10px;
+  --radius-lg: 14px;
 }
 
 * { box-sizing: border-box; }
@@ -41,9 +71,15 @@
 body {
   margin: 0;
   font-family: var(--font-sans);
-  background: var(--bg);
-  color: var(--text-primary);
+  color: var(--ink);
   -webkit-font-smoothing: antialiased;
+
+  /* 机の上に原稿用紙が置いてあるような下地。細い方眼を薄く敷く */
+  background-color: var(--desk);
+  background-image:
+    linear-gradient(var(--desk-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--desk-line) 1px, transparent 1px);
+  background-size: 26px 26px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -52,28 +88,75 @@ body {
 
 button:focus-visible,
 input:focus-visible,
+textarea:focus-visible,
 summary:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--indigo);
   outline-offset: 2px;
 }
 
 .app {
   max-width: 760px;
   margin: 0 auto;
-  padding: 2rem 1.25rem 3rem;
+  padding: 2.25rem 1.25rem 3rem;
 }
 
-/* 検定(速度)モードは問題文・入力欄を1行30文字ぶん確保するため、
-   その間だけコンテナの横幅を広げて2カラムを横並びのまま保つ。 */
 body.kentei-active .app {
   max-width: 1040px;
 }
 
 /* ---------------------------- ヘッダー ---------------------------- */
 
-.app-header { text-align: center; margin-bottom: 1.75rem; }
-.app-header h1 { font-size: 24px; font-weight: 700; margin: 0 0 4px; }
-.subtitle { color: var(--text-secondary); font-size: 14px; margin: 0; }
+.app-header {
+  position: relative;
+  padding: 0 76px 14px 0;
+  margin-bottom: 1.75rem;
+  border-bottom: 3px double var(--rule-strong);
+  text-align: left;
+}
+
+.app-header h1 {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  margin: 0 0 6px;
+  color: var(--ink);
+}
+
+.subtitle {
+  color: var(--ink-soft);
+  font-size: 13px;
+  margin: 0;
+}
+
+/* 「練習中」のハンコ風スタンプ。ヘッダー内で唯一の強い装飾要素 */
+.app-header::after {
+  content: "練習中";
+  position: absolute;
+  top: 2px;
+  right: 0;
+  width: 52px;
+  height: 52px;
+  border: 2.5px solid var(--stamp);
+  border-radius: 50%;
+  color: var(--stamp);
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.1;
+  text-align: center;
+  transform: rotate(-9deg);
+  opacity: 0.82;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+@media (max-width: 480px) {
+  .app-header::after { display: none; }
+}
 
 /* ---------------------------- 設定画面 ---------------------------- */
 
@@ -83,21 +166,25 @@ body.kentei-active .app {
   gap: 14px;
 }
 
-/* 各設定項目を独立したカードにして境界をはっきりさせる */
+/* 各設定項目を原稿用紙の1マス区画に見立てたカードにする。
+   丸みを抑え、紙らしい柔らかい影だけで区切る(灰色の汎用シャドウは使わない) */
 .setting-block {
   margin: 0;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-paper);
   padding: 1rem 1.1rem 1.15rem;
+  box-shadow: 0 2px 0 var(--desk-line);
 }
 
 .setting-label {
   text-align: left;
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--ink);
   margin: 0 0 10px;
+  padding-left: 10px;
+  border-left: 3px solid var(--indigo);
 }
 
 .difficulty-bar {
@@ -108,32 +195,39 @@ body.kentei-active .app {
   margin-bottom: 0;
 }
 
+/* ボタン全般: キーキャップらしい角の立った台形の押し感を持たせる。
+   すべて同じ丸みの錠剤ボタンにはしない。 */
 .difficulty-btn, .duration-btn, .mode-btn, .genre-btn {
   padding: 9px 16px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-strong);
-  background: var(--surface);
-  color: var(--text-secondary);
+  border-radius: var(--r-key);
+  border: 1px solid var(--rule-strong);
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-family: var(--font-sans);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+  box-shadow: 0 2px 0 var(--rule-strong);
+  transition: border-color 0.12s ease, color 0.12s ease, background-color 0.12s ease,
+              box-shadow 0.08s ease, transform 0.08s ease;
 }
 
 .difficulty-btn:hover, .duration-btn:hover, .mode-btn:hover, .genre-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent-ink);
-  background: var(--accent-bg);
+  border-color: var(--indigo);
+  color: var(--indigo-deep);
+  background: var(--indigo-bg);
 }
 
 .difficulty-btn.active, .duration-btn.active, .mode-btn.active, .genre-btn.active {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--indigo);
+  border-color: var(--indigo-deep);
   color: #fff;
   font-weight: 700;
+  box-shadow: 0 2px 0 var(--indigo-deep);
+  transform: translateY(1px);
 }
 
-/* 色だけに頼らず、チェックマークでも選択中を示す */
+/* 色だけに頼らず、押し込まれたキーであることをチェックでも示す */
 .difficulty-btn.active::before, .duration-btn.active::before,
 .mode-btn.active::before, .genre-btn.active::before {
   content: "✓ ";
@@ -141,15 +235,15 @@ body.kentei-active .app {
 
 .subgenre-bar { margin-top: 10px; }
 
-/* カテゴリ選択: 単なる同形の錠剤ボタンだと見分けがつきにくいため、
-   ジャンルごとに異なるアイコン(形)を持つ正方形寄りのカードにして
-   一瞬で違いが見分けられるようにする。色だけに頼らないよう、
-   選択中はアイコンの図形自体に加えて隅のチェックバッジでも示す。 */
+/* カテゴリ選択: バインダーの見出しタブのように、カードの上に貼りついた
+   インデックスタブとして表現する。角丸は上だけ、選択中は前面に出て
+   カード本体と同じ紙色に、非選択はひとつ奥まった色にする。 */
 .category-bar {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: 6px;
+  margin: -1rem -1.1rem 14px;
+  padding: 0 10px;
 }
 
 .category-btn {
@@ -158,61 +252,67 @@ body.kentei-active .app {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  min-height: 78px;
-  padding: 12px 6px 10px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border-strong);
-  background: var(--surface);
-  color: var(--text-secondary);
-  font-size: 12.5px;
+  gap: 6px;
+  min-height: 62px;
+  padding: 10px 6px 8px;
+  border-radius: var(--r-tab);
+  border: 1px solid var(--rule-strong);
+  border-bottom: none;
+  background: var(--desk);
+  color: var(--ink-soft);
+  font-family: var(--font-sans);
+  font-size: 12px;
   font-weight: 600;
-  line-height: 1.3;
+  line-height: 1.25;
   cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+  transition: border-color 0.12s ease, color 0.12s ease, background-color 0.12s ease;
 }
 
 .category-icon {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
 }
 
 .category-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent-ink);
-  background: var(--accent-bg);
+  color: var(--indigo-deep);
+  background: var(--indigo-bg);
 }
 
 .category-btn.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
+  background: var(--paper);
+  border-color: var(--rule);
+  color: var(--indigo-deep);
+  font-weight: 700;
+}
+
+/* 選択中タブの下端をカード本体に溶け込ませ、「前に出てきた」ように見せる */
+.category-btn.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 2px;
+  background: var(--paper);
 }
 
 .category-btn.active::after {
-  content: "✓";
+  content: "";
   position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 18px;
-  height: 18px;
+  top: 6px;
+  right: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: #fff;
-  color: var(--accent);
-  font-size: 11px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  background: var(--stamp);
 }
 
 @media (max-width: 480px) {
   .category-bar { grid-template-columns: repeat(2, 1fr); }
 }
 
-/* 「はじめる」ボタン: スクロールしても追従させ、常に押せる位置に保つ */
+/* 「はじめる」ボタン: 大きめのキーキャップ(スペースキー)のイメージ */
 .start-btn {
   position: sticky;
   bottom: 14px;
@@ -221,23 +321,25 @@ body.kentei-active .app {
   width: 100%;
   margin: 4px auto 0;
   padding: 15px;
-  border-radius: var(--radius);
-  border: none;
-  background: var(--accent);
+  border-radius: var(--r-key);
+  border: 1px solid var(--indigo-deep);
+  border-bottom-width: 4px;
+  background: var(--indigo);
   color: #fff;
+  font-family: var(--font-sans);
   font-size: 16px;
   font-weight: 700;
+  letter-spacing: 0.04em;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(224, 129, 20, 0.35);
-  transition: box-shadow 0.15s ease, transform 0.08s ease;
+  transition: transform 0.08s ease, border-bottom-width 0.08s ease;
 }
 
-.start-btn:hover { box-shadow: 0 6px 18px rgba(224, 129, 20, 0.42); }
-.start-btn:active { transform: translateY(1px); }
+.start-btn:hover { background: var(--indigo-deep); }
+.start-btn:active { transform: translateY(2px); border-bottom-width: 2px; }
 
 .back-btn { display: inline-block; margin-bottom: 0; }
 
-/* 練習画面の上段: 左に戻るボタン、右上に常時表示の残り時間バッジ */
+/* 練習画面の上段 */
 .practice-topbar {
   display: flex;
   align-items: center;
@@ -249,16 +351,17 @@ body.kentei-active .app {
 .timer-badge {
   flex-shrink: 0;
   padding: 6px 14px;
-  border-radius: var(--radius);
-  background: var(--surface-muted);
-  color: var(--text-primary);
+  border-radius: var(--r-key);
+  background: var(--indigo-deep);
+  color: #fff;
+  font-family: var(--font-mono);
   font-weight: 700;
   font-size: 14px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
-/* PC幅: 設定カードを2列に並べて一覧性を上げる */
+/* PC幅: 設定カードを2列に */
 @media (min-width: 640px) {
   #setup-screen {
     display: grid;
@@ -271,29 +374,51 @@ body.kentei-active .app {
   }
 }
 
-/* ---------------------------- 練習画面 ---------------------------- */
+/* ---------------------------- 練習画面(原稿用紙カード) ---------------------------- */
 
 .practice-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  position: relative;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-paper);
   padding: 1.75rem 1.5rem;
+  box-shadow: 0 3px 0 var(--desk-line);
+}
+
+/* 原稿用紙らしい左肩の綴じ穴 */
+.practice-card::before {
+  content: "";
+  position: absolute;
+  top: 18px;
+  left: 12px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--desk);
+  box-shadow: 0 90px 0 var(--desk);
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .practice-card::before { display: block; }
 }
 
 .progress-label {
   text-align: center;
   font-size: 13px;
-  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  color: var(--ink-soft);
   margin: 0 0 1rem;
 }
 
 .display-line {
   text-align: center;
-  font-size: 22px;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-family: var(--font-serif);
+  font-size: 23px;
+  font-weight: 700;
+  color: var(--ink);
   margin: 0 0 0.75rem;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .romaji-line {
@@ -308,19 +433,18 @@ body.kentei-active .app {
   line-height: 1.6;
 }
 
-.romaji-done { color: var(--text-primary); }
-.romaji-pending { color: var(--text-muted); }
+.romaji-done { color: var(--ink); }
+.romaji-pending { color: var(--ink-faint); }
 
-/* 次に打つべき1文字だけを背景色で囲む。
-   「re」「mu」のような2文字セットまとめてではなく1文字単位でハイライトするため、
-   スペースのように文字自体が見えない場合でも、打つべき位置がピンポイントでわかる。 */
+/* 次に打つべき1文字だけを背景色で囲む */
 .romaji-current {
   display: inline-block;
   min-width: 0.9ch;
   padding: 1px 4px;
   border-radius: 4px;
-  background: var(--accent-bg);
-  box-shadow: 0 0 0 1px rgba(224, 129, 20, 0.35);
+  background: var(--indigo-bg);
+  box-shadow: 0 0 0 1px rgba(44, 74, 104, 0.4);
+  color: var(--indigo-deep);
 }
 
 .ime-input {
@@ -333,23 +457,23 @@ body.kentei-active .app {
   min-height: 32px;
   margin-bottom: 0.75rem;
   padding: 0.55rem 0.8rem;
-  background: var(--surface);
-  border: 2px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
+  background: var(--paper);
+  border: 2px solid var(--rule-strong);
+  border-radius: var(--r-key);
+  color: var(--ink);
   font-family: var(--font-mono);
 }
 
 .ime-input:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-bg);
+  border-color: var(--indigo);
+  box-shadow: 0 0 0 3px var(--indigo-bg);
 }
 
 .ime-input.ime-wrong,
 .kentei-input.ime-wrong {
-  border-color: var(--danger);
-  box-shadow: 0 0 0 3px var(--danger-bg);
+  border-color: var(--miss);
+  box-shadow: 0 0 0 3px var(--miss-bg);
   animation: ime-shake 0.15s ease-in-out 0s 2;
 }
 
@@ -358,20 +482,17 @@ body.kentei-active .app {
   50% { transform: translateX(4px); }
 }
 
-/* 長文(検定モードなど)の出題: 中央揃えだと読みにくいので左揃えにし、
-   画面に収まりきらない分は枠内スクロールで追従できるようにする。 */
 .display-line.long-text,
 .romaji-line.long-text {
   text-align: left;
   max-height: 220px;
   overflow-y: auto;
   padding: 12px 14px;
-  background: var(--surface-muted);
-  border-radius: var(--radius-sm);
+  background: var(--paper-soft);
+  border-radius: var(--r-paper);
 }
 
 /* ---------------------------- 検定(速度)モード ---------------------------- */
-/* 左に問題文、右に実際のWordの入力画面をイメージした用紙風の入力欄を並べる */
 
 .kentei-columns {
   display: flex;
@@ -383,17 +504,15 @@ body.kentei-active .app {
 .kentei-problem-pane,
 .kentei-word-pane {
   flex: 0 0 auto;
-  /* 中の文章/入力欄には左右16pxずつの余白があるため、その分を上乗せして
-     テキストが実際に占める幅がちょうど30文字(30em)になるようにする。 */
   box-sizing: content-box;
   width: calc(30em + 32px);
   max-width: 100%;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  background: var(--surface);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius);
+  background: var(--paper);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-paper);
   overflow: hidden;
 }
 
@@ -402,12 +521,11 @@ body.kentei-active .app {
   padding: 8px 14px;
   font-size: 12px;
   font-weight: 700;
-  color: var(--text-secondary);
-  background: var(--surface-muted);
-  border-bottom: 1px solid var(--border);
+  color: var(--ink-soft);
+  background: var(--paper-soft);
+  border-bottom: 1px solid var(--rule);
 }
 
-/* 罫線の行の高さ(問題文・入力欄で共通)。ここを変えると両方の罫線間隔が揃って動く */
 .kentei-problem-pane,
 .kentei-word-pane {
   --kentei-line-height: 28px;
@@ -423,34 +541,32 @@ body.kentei-active .app {
   font-family: var(--font-sans);
   font-size: 15px;
   line-height: var(--kentei-line-height);
-  color: var(--text-primary);
-  /* Wordの原稿用紙のような横罫線を、行の高さぴったりに敷く */
-  background-image: linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+  color: var(--ink);
+  background-image: linear-gradient(to bottom, var(--rule) 1px, transparent 1px);
   background-size: 100% var(--kentei-line-height);
   background-position: 0 calc(14px + var(--kentei-line-height) - 1px);
   background-repeat: repeat-y;
 }
 
-/* 実際のWordウィンドウをイメージした、信号機風の丸ボタンが並ぶツールバー */
 .kentei-word-toolbar {
   display: flex;
   align-items: center;
   gap: 7px;
   padding: 9px 14px;
-  background: var(--surface-muted);
-  border-bottom: 1px solid var(--border);
+  background: var(--paper-soft);
+  border-bottom: 1px solid var(--rule);
 }
 
 .kentei-word-toolbar span {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: var(--border-strong);
+  background: var(--rule-strong);
 }
 
-.kentei-word-toolbar span:nth-child(1) { background: #ff5f57; }
-.kentei-word-toolbar span:nth-child(2) { background: #febc2e; }
-.kentei-word-toolbar span:nth-child(3) { background: #28c840; }
+.kentei-word-toolbar span:nth-child(1) { background: var(--miss); }
+.kentei-word-toolbar span:nth-child(2) { background: #c98a2c; }
+.kentei-word-toolbar span:nth-child(3) { background: var(--ok); }
 
 .kentei-input {
   flex: 1;
@@ -461,12 +577,11 @@ body.kentei-active .app {
   border: none;
   padding: 14px 16px;
   background-color: #fff;
-  color: var(--text-primary);
+  color: var(--ink);
   font-family: var(--font-sans);
   font-size: 15px;
   line-height: var(--kentei-line-height);
-  /* 問題文と行の高さを揃えることで、左右で罫線の位置が一致するようにする */
-  background-image: linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+  background-image: linear-gradient(to bottom, var(--rule) 1px, transparent 1px);
   background-size: 100% var(--kentei-line-height);
   background-position: 0 calc(14px + var(--kentei-line-height) - 1px);
   background-repeat: repeat-y;
@@ -474,10 +589,9 @@ body.kentei-active .app {
 
 .kentei-input:focus {
   outline: none;
-  box-shadow: inset 0 0 0 2px var(--accent-bg);
+  box-shadow: inset 0 0 0 2px var(--indigo-bg);
 }
 
-/* 完了後に表示する採点結果。入力欄と同じ見た目にして、そのまま置き換わって見えるようにする */
 .kentei-result-text {
   white-space: pre-wrap;
   word-break: break-word;
@@ -485,20 +599,20 @@ body.kentei-active .app {
 }
 
 .kentei-char-wrong {
-  color: #d1332e;
-  background: rgba(209, 51, 46, 0.12);
+  color: var(--miss);
+  background: rgba(178, 58, 44, 0.12);
   border-radius: 2px;
 }
 
 .kentei-char-missing {
-  color: #d1332e;
+  color: var(--miss);
   text-decoration: underline dashed;
   text-decoration-thickness: 1.5px;
 }
 
 .kentei-char-extra {
-  color: #d1332e;
-  background: rgba(209, 51, 46, 0.12);
+  color: var(--miss);
+  background: rgba(178, 58, 44, 0.12);
   text-decoration: line-through;
 }
 
@@ -506,8 +620,8 @@ body.kentei-active .app {
   display: flex;
   justify-content: flex-end;
   padding: 10px 14px;
-  border-top: 1px solid var(--border);
-  background: var(--surface-muted);
+  border-top: 1px solid var(--rule);
+  background: var(--paper-soft);
 }
 
 @media (max-width: 640px) {
@@ -517,23 +631,24 @@ body.kentei-active .app {
 .focus-hint {
   text-align: center;
   font-size: 13px;
-  color: var(--text-muted);
+  color: var(--ink-faint);
   margin-bottom: 1rem;
 }
 
 .result-panel {
   text-align: center;
-  background: var(--success-bg);
-  border-radius: var(--radius);
+  background: var(--ok-bg);
+  border: 1px solid rgba(56, 102, 65, 0.25);
+  border-radius: var(--r-paper);
   padding: 1rem;
   margin-bottom: 1rem;
 }
 
-.result-panel p { margin: 0 0 10px; color: var(--success); font-weight: 600; }
+.result-panel p { margin: 0 0 10px; color: var(--ok); font-weight: 700; }
 
 .ranking-name-setup {
   background: rgba(255, 255, 255, 0.6);
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-key);
   padding: 12px;
   margin-bottom: 14px;
   text-align: left;
@@ -541,7 +656,7 @@ body.kentei-active .app {
 
 .ranking-name-hint {
   font-size: 13px;
-  color: var(--text-secondary) !important;
+  color: var(--ink-soft) !important;
   font-weight: 500 !important;
 }
 
@@ -555,14 +670,15 @@ body.kentei-active .app {
   flex: 1;
   min-width: 160px;
   padding: 8px 10px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-key);
   font-size: 14px;
+  font-family: var(--font-sans);
 }
 
 .ranking-panel {
   background: rgba(255, 255, 255, 0.6);
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-key);
   padding: 12px 16px;
   margin-bottom: 14px;
   text-align: left;
@@ -570,7 +686,7 @@ body.kentei-active .app {
 
 .ranking-title {
   font-size: 13px !important;
-  color: var(--text-secondary) !important;
+  color: var(--ink-soft) !important;
   font-weight: 700 !important;
   margin-bottom: 8px !important;
 }
@@ -588,32 +704,34 @@ body.kentei-active .app {
   display: flex;
   justify-content: space-between;
   font-size: 14px;
-  color: var(--text-primary);
+  color: var(--ink);
   padding: 4px 6px;
   border-radius: 6px;
 }
 
 .ranking-list li.is-me {
-  background: var(--accent-bg);
+  background: var(--indigo-bg);
   font-weight: 700;
 }
 
 .ranking-rank {
   width: 1.8em;
   display: inline-block;
-  color: var(--text-muted);
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
 }
 
 .genre-ranking-overview {
   margin-top: 2rem;
   padding-top: 1.5rem;
-  border-top: 1px solid var(--border);
+  border-top: 3px double var(--rule-strong);
 }
 
 .genre-ranking-title {
+  font-family: var(--font-serif);
   font-size: 16px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--ink);
   margin-bottom: 12px;
 }
 
@@ -624,16 +742,16 @@ body.kentei-active .app {
 }
 
 .genre-ranking-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-paper);
   padding: 12px 14px;
 }
 
 .genre-ranking-card h3 {
   font-size: 13px;
   font-weight: 700;
-  color: var(--text-secondary);
+  color: var(--ink-soft);
   margin: 0 0 8px;
 }
 
@@ -650,37 +768,44 @@ body.kentei-active .app {
   display: flex;
   justify-content: space-between;
   font-size: 13px;
-  color: var(--text-primary);
+  color: var(--ink);
+  font-family: var(--font-mono);
 }
 
 .genre-ranking-card li.is-empty {
-  color: var(--text-muted);
+  color: var(--ink-faint);
+  font-family: var(--font-sans);
 }
 
 .primary-btn {
-  background: var(--accent);
+  background: var(--indigo);
   color: #fff;
-  border: none;
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--indigo-deep);
+  border-bottom-width: 3px;
+  border-radius: var(--r-key);
   padding: 9px 22px;
+  font-family: var(--font-sans);
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
+  transition: transform 0.08s ease, border-bottom-width 0.08s ease;
 }
 
-.primary-btn:hover { opacity: 0.92; }
+.primary-btn:hover { background: var(--indigo-deep); }
+.primary-btn:active { transform: translateY(1px); border-bottom-width: 2px; }
 
 .ghost-btn {
   background: transparent;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-key);
   padding: 7px 14px;
+  font-family: var(--font-sans);
   font-size: 13px;
-  color: var(--text-secondary);
+  color: var(--ink-soft);
   cursor: pointer;
 }
 
-.ghost-btn:hover { border-color: var(--accent); color: var(--accent-ink); }
+.ghost-btn:hover { border-color: var(--indigo); color: var(--indigo-deep); }
 
 .stats-grid {
   display: grid;
@@ -690,26 +815,28 @@ body.kentei-active .app {
 }
 
 .stat-box {
-  background: var(--surface-muted);
-  border-radius: var(--radius);
+  background: var(--paper-soft);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-key);
   padding: 12px 8px;
   text-align: center;
 }
 
-.stat-label { font-size: 12px; color: var(--text-secondary); margin: 0 0 4px; }
-.stat-value { font-size: 20px; font-weight: 700; margin: 0; font-family: var(--font-mono); }
-.unit-label { font-size: 11px; font-weight: 400; color: var(--text-secondary); }
+.stat-label { font-size: 12px; color: var(--ink-soft); margin: 0 0 4px; }
+.stat-value { font-size: 20px; font-weight: 700; margin: 0; font-family: var(--font-mono); color: var(--ink); }
+.unit-label { font-size: 11px; font-weight: 400; color: var(--ink-soft); }
 
 /* ---------------------------- 仮想キーボード ---------------------------- */
+/* 実機のメカニカルキーボードそのままの質感。差し色だけ藍色に合わせる */
 
 .keyboard-jis {
   display: flex;
   flex-direction: column;
   gap: 8px;
   align-items: center;
-  background: #17181c;
-  border: 3px solid #3a3b40;
-  border-radius: 22px;
+  background: #1b1c1f;
+  border: 3px solid #3d3e43;
+  border-radius: 16px;
   padding: 18px 16px;
   width: fit-content;
   max-width: 100%;
@@ -722,12 +849,14 @@ body.kentei-active .app {
   min-width: 32px;
   height: 34px;
   padding: 0 6px;
-  border-radius: 7px;
-  background: #0a0a0c;
+  border-radius: 5px;
+  background: #0c0c0e;
   border: 2px solid #d7d8db;
+  border-bottom-width: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 600;
   color: #e8e8ea;
@@ -748,20 +877,20 @@ body.kentei-active .app {
 }
 
 .kb-key-expected {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--indigo);
+  border-color: #6f92b3;
   color: #fff;
   font-weight: 700;
 }
 
 .kb-key-shift-hint {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--stamp);
+  color: var(--stamp);
 }
 
 .kb-key-miss {
-  background: var(--danger);
-  border-color: var(--danger);
+  background: var(--miss);
+  border-color: #e08877;
   color: #fff;
 }
 
@@ -775,9 +904,9 @@ body.kentei-active .app {
 
 .weak-key-panel {
   margin: 0;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-paper);
   padding: 0.85rem 1.1rem;
 }
 
@@ -787,7 +916,7 @@ body.kentei-active .app {
   cursor: pointer;
   font-weight: 700;
   font-size: 14px;
-  color: var(--text-primary);
+  color: var(--ink);
   list-style: none;
   display: flex;
   align-items: center;
@@ -800,7 +929,7 @@ body.kentei-active .app {
   content: "▸";
   display: inline-block;
   margin-right: 8px;
-  color: var(--text-secondary);
+  color: var(--ink-soft);
   transition: transform 0.15s ease;
   font-size: 12px;
 }
@@ -816,7 +945,7 @@ body.kentei-active .app {
   gap: 12px;
   margin: 12px 0 12px;
   padding-top: 12px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--rule);
 }
 
 .weak-key-row {
@@ -831,26 +960,27 @@ body.kentei-active .app {
 .weak-key-label {
   font-weight: 700;
   text-align: center;
-  color: var(--text-primary);
+  color: var(--ink);
   font-family: var(--font-mono);
 }
 
 .weak-key-bar-track {
   height: 8px;
-  background: var(--surface-muted);
+  background: var(--paper-soft);
+  border: 1px solid var(--rule);
   border-radius: 999px;
   overflow: hidden;
 }
 
 .weak-key-bar-fill {
   height: 100%;
-  background: var(--danger);
+  background: var(--miss);
   border-radius: 999px;
 }
 
-.weak-key-count { color: var(--text-secondary); text-align: right; font-family: var(--font-mono); }
+.weak-key-count { color: var(--ink-soft); text-align: right; font-family: var(--font-mono); }
 
-.muted-text { color: var(--text-muted); font-size: 13px; margin: 0; }
+.muted-text { color: var(--ink-faint); font-size: 13px; margin: 0; }
 
 @media (max-width: 480px) {
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
