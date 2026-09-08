@@ -19,7 +19,8 @@ const state = {
   rafId: null,
   lastStatsRenderAt: 0,
   roundOver: false,
-  roundStats: { correct: 0, miss: 0, itemsDone: 0, keyMissMap: {}, keyAttemptMap: {} }
+  roundStats: { correct: 0, miss: 0, itemsDone: 0, keyMissMap: {}, keyAttemptMap: {} },
+  pendingRankingScore: null // 名前未登録の状態でラウンドが終わったとき、名前登録後に送信するスコアを一時保存する
 };
 
 const els = {
@@ -56,6 +57,12 @@ const els = {
   restartBtn: document.getElementById("restart-btn"),
   resultPanel: document.getElementById("result-panel"),
   resultText: document.getElementById("result-text"),
+  rankingNameSetup: document.getElementById("ranking-name-setup"),
+  rankingNameInput: document.getElementById("ranking-name-input"),
+  rankingNameSaveBtn: document.getElementById("ranking-name-save-btn"),
+  rankingPanel: document.getElementById("ranking-panel"),
+  rankingTitle: document.getElementById("ranking-title"),
+  rankingList: document.getElementById("ranking-list"),
   focusHint: document.getElementById("focus-hint")
 };
 
@@ -307,6 +314,8 @@ function startRound() {
   stopTicking();
   state.roundStats = { correct: 0, miss: 0, itemsDone: 0, keyMissMap: {}, keyAttemptMap: {} };
   els.resultPanel.style.display = "none";
+  els.rankingNameSetup.style.display = "none";
+  els.rankingPanel.style.display = "none";
   els.focusHint.style.display = "block";
 
   const isKentei = isKenteiMode();
@@ -359,7 +368,76 @@ function finishRound() {
   els.resultPanel.style.display = "block";
   els.statsGrid.style.display = "";
   els.resultText.textContent = `${state.roundStats.itemsDone}問・平均速度 ${speed} 打/秒・ミス ${state.roundStats.miss} 回`;
+
+  // 検定モードは一旦ランキング対象外
+  if (!isKenteiMode()) {
+    const totalKeys = state.roundStats.correct + state.roundStats.miss;
+    const accuracy = totalKeys > 0 ? (state.roundStats.correct / totalKeys) * 100 : 100;
+    submitRankingResult({
+      speed: parseFloat(speed),
+      accuracy: Math.round(accuracy * 10) / 10,
+      miss: state.roundStats.miss,
+    });
+  } else {
+    els.rankingNameSetup.style.display = "none";
+    els.rankingPanel.style.display = "none";
+  }
 }
+
+// --- ランキング送信・表示 ---
+// 名前がまだ端末に保存されていない場合は先に名前入力フォームを出し、
+// 登録ボタンが押されたタイミングで初めて送信する。2回目以降は自動送信。
+function submitRankingResult(scoreInfo) {
+  const mode = buildRankingMode(state);
+  const existingName = getRankingName();
+
+  if (existingName) {
+    els.rankingNameSetup.style.display = "none";
+    saveScoreToRanking({ name: existingName, ...mode, ...scoreInfo });
+    renderRanking(mode, existingName);
+  } else {
+    state.pendingRankingScore = { mode, scoreInfo };
+    els.rankingPanel.style.display = "none";
+    els.rankingNameSetup.style.display = "block";
+    els.rankingNameInput.value = "";
+    els.rankingNameInput.focus();
+  }
+}
+
+async function renderRanking(mode, myName) {
+  els.rankingPanel.style.display = "block";
+  els.rankingList.innerHTML = "<li>読み込み中...</li>";
+  const rows = await fetchRanking(mode);
+
+  if (rows.length === 0) {
+    els.rankingList.innerHTML = "<li>まだ記録がありません(あなたが1位です!)</li>";
+    return;
+  }
+
+  els.rankingList.innerHTML = rows
+    .map((row, i) => {
+      const isMe = row.name === myName;
+      return `<li class="${isMe ? "is-me" : ""}"><span><span class="ranking-rank">${i + 1}位</span>${escapeHtml(row.name)}</span><span>${Number(row.speed).toFixed(1)} 打/秒</span></li>`;
+    })
+    .join("");
+}
+
+els.rankingNameSaveBtn.addEventListener("click", () => {
+  const name = els.rankingNameInput.value.trim();
+  if (!name) {
+    els.rankingNameInput.focus();
+    return;
+  }
+  setRankingName(name);
+  els.rankingNameSetup.style.display = "none";
+
+  const pending = state.pendingRankingScore;
+  if (pending) {
+    saveScoreToRanking({ name, ...pending.mode, ...pending.scoreInfo });
+    renderRanking(pending.mode, name);
+    state.pendingRankingScore = null;
+  }
+});
 
 // --- 変換なしモード: ローマ字を1キーずつモーラ単位で判定する ---
 function handleKeydown(e) {
@@ -524,7 +602,9 @@ function handleKenteiFinish() {
 
   // 末尾の余分な改行(打ち終えたときの癖でついEnterしてしまう分)は採点対象外にする
   const typed = els.kenteiInput.value.replace(/\n+$/, "");
-  const correct = state.currentItem.display;
+  // answerフィールドがあればそれを正解とする(問題文にわざと誤字を仕込むケース用)。
+  // 無ければ今まで通りdisplayをそのまま正解として扱う。
+  const correct = state.currentItem.answer || state.currentItem.display;
   const diff = diffKenteiText(typed, correct);
 
   state.roundStats.correct += diff.correctCount;
