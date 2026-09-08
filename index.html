@@ -20,12 +20,38 @@
     <section id="setup-screen" class="screen">
       <div class="setting-block">
         <p class="setting-label">出題内容</p>
-        <div class="difficulty-bar category-bar" id="category-bar">
-          <button class="category-btn active" data-category="typing">タイピング</button>
-          <button class="category-btn" data-category="business">ビジネス系</button>
-          <button class="category-btn" data-category="it">IT系</button>
-          <button class="category-btn" data-category="programming">プログラミング</button>
-          <button class="category-btn" data-category="kentei">全商ビジネス文書検定</button>
+        <div class="category-bar" id="category-bar">
+          <button class="category-btn active" data-category="typing">
+            <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="6" width="18" height="12" rx="2"/>
+              <path d="M6.5 10h.01M10 10h.01M13.5 10h.01M17 10h.01"/>
+              <path d="M6.5 13.5h.01M10 13.5h.01M13.5 13.5h.01M17 13.5h.01"/>
+              <path d="M7 16.7h10"/>
+            </svg>
+            <span>タイピング</span>
+          </button>
+          <button class="category-btn" data-category="business">
+            <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="7.5" width="18" height="12" rx="2"/>
+              <path d="M8 7.5V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v1.5"/>
+              <path d="M3 12.5h18"/>
+            </svg>
+            <span>ビジネス系</span>
+          </button>
+          <button class="category-btn" data-category="it">
+            <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="7" y="7" width="10" height="10" rx="1.5"/>
+              <path d="M9.5 7V4M14.5 7V4M9.5 20v-3M14.5 20v-3M7 9.5H4M7 14.5H4M20 9.5h-3M20 14.5h-3"/>
+            </svg>
+            <span>IT系</span>
+          </button>
+          <button class="category-btn" data-category="programming">
+            <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 8l-4 4 4 4"/>
+              <path d="M15 8l4 4-4 4"/>
+            </svg>
+            <span>プログラミング</span>
+          </button>
         </div>
 
         <div class="difficulty-bar subgenre-bar" data-category-group="typing">
@@ -36,6 +62,7 @@
         <div class="difficulty-bar subgenre-bar" data-category-group="business" style="display:none;">
           <button class="genre-btn active" data-genre="business">ビジネス用語</button>
           <button class="genre-btn" data-genre="email">メール</button>
+          <button class="genre-btn" data-genre="kentei">検定(速度)</button>
         </div>
         <div class="difficulty-bar subgenre-bar" data-category-group="it" style="display:none;">
           <button class="genre-btn active" data-genre="it">IT用語</button>
@@ -45,21 +72,22 @@
           <button class="genre-btn active" data-genre="js">JS</button>
           <button class="genre-btn" data-genre="sql">SQL</button>
         </div>
-        <div class="difficulty-bar subgenre-bar" data-category-group="kentei" style="display:none;">
-          <button class="genre-btn active" data-genre="kentei">ビジネス文書</button>
-        </div>
       </div>
 
-      <div class="setting-block" id="input-mode-block">
+      <div class="setting-block" id="mode-setting-block">
         <p class="setting-label">入力モード</p>
         <div class="difficulty-bar">
           <button class="mode-btn active" data-mode="off">変換なし</button>
           <button class="mode-btn" data-mode="on">変換あり</button>
         </div>
-        <p class="muted-text" id="kentei-mode-note" style="display:none; margin-top:8px;">
-          全商ビジネス文書検定モードでは、実際のWord入力画面のように
-          左に問題文・右に入力欄を表示します(この設定は使用しません)。
-        </p>
+      </div>
+
+      <div class="setting-block">
+        <p class="setting-label">記号問題</p>
+        <div class="difficulty-bar">
+          <button class="punctuation-btn active" data-punctuation="on">！？を含める</button>
+          <button class="punctuation-btn" data-punctuation="off">！？を除く</button>
+        </div>
       </div>
 
       <div class="setting-block">
@@ -69,6 +97,7 @@
           <button class="duration-btn" data-duration="60">60秒</button>
           <button class="duration-btn" data-duration="90">90秒</button>
           <button class="duration-btn" data-duration="120">120秒</button>
+          <button class="duration-btn" data-duration="600">10分</button>
           <button class="duration-btn" data-duration="unlimited">無制限</button>
         </div>
       </div>
@@ -95,40 +124,40 @@
       <main class="practice-card">
         <p class="progress-label" id="progress-label">1問目</p>
 
-        <div id="normal-layout">
-          <p class="display-line" id="display-line"></p>
-          <div class="romaji-line" id="romaji-line"></div>
-          <input
-            id="ime-input"
-            class="ime-input"
-            type="text"
-            autocomplete="off"
-            autocorrect="off"
-            autocapitalize="off"
-            spellcheck="false"
-            placeholder="ここに入力してEnterで確定"
-            style="display:none;"
-          />
-        </div>
+        <p class="display-line" id="display-line"></p>
+        <div class="romaji-line" id="romaji-line"></div>
+        <input
+          id="ime-input"
+          class="ime-input"
+          type="text"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+          placeholder="ここに入力してEnterで確定"
+          style="display:none;"
+        />
 
-        <!-- 全商ビジネス文書検定モード専用レイアウト:
-             左に問題文(ふりがななど不要のまま表示)、右に実際のWordのような入力欄を並べる。
-             検定カテゴリを選んだときのみ表示する。 -->
-        <div id="kentei-layout" class="kentei-layout" style="display:none;">
-          <div class="kentei-pane kentei-problem-pane">
+        <!-- 検定(速度)モード専用: 左に問題文(読みは出さない)、右に
+             実際のWordの入力画面をイメージした用紙風の入力欄を並べる。
+             genre が "kentei" のときだけ app.js から表示を切り替える。 -->
+        <div class="kentei-columns" id="kentei-columns" style="display:none;">
+          <div class="kentei-problem-pane">
             <p class="kentei-pane-label">問題文</p>
-            <pre id="kentei-problem-text" class="kentei-problem-text"></pre>
+            <p class="kentei-problem-text" id="kentei-problem-text"></p>
           </div>
-          <div class="kentei-pane kentei-input-pane">
-            <p class="kentei-pane-label">入力欄</p>
+          <div class="kentei-word-pane">
+            <div class="kentei-word-toolbar">
+              <span></span><span></span><span></span>
+            </div>
             <textarea
               id="kentei-input"
-              class="kentei-textarea"
+              class="kentei-input"
               autocomplete="off"
               autocorrect="off"
               autocapitalize="off"
               spellcheck="false"
-              placeholder="左の問題文と同じになるように入力してください"
+              placeholder="ここに入力してください(IMEで変換できます)"
             ></textarea>
           </div>
         </div>
@@ -167,12 +196,12 @@
   <script src="kana-table.js"></script>
   <script src="sentences.js"></script>
   <script src="business-sentences.js"></script>
-  <script src="kentei-sentences.js"></script>
   <script src="js-sentences.js"></script>
   <script src="sql-sentences.js"></script>
   <script src="it-sentences.js"></script>
   <script src="email-sentences.js"></script>
   <script src="dev-sentences.js"></script>
+  <script src="kentei-sentences.js"></script>
   <script src="typing-engine.js"></script>
   <script src="keyboard.js"></script>
   <script src="app.js"></script>
