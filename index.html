@@ -157,8 +157,14 @@
               autocorrect="off"
               autocapitalize="off"
               spellcheck="false"
-              placeholder="ここに入力してください(IMEで変換できます)"
+              placeholder="ここに入力してください(IMEで変換できます・Enterで改行できます)"
             ></textarea>
+            <!-- 完了ボタンを押すまで採点しない。押した後はここに間違い箇所を
+                 赤字で示した結果を表示し、ボタンは「次の問題へ」に切り替わる。 -->
+            <div id="kentei-result-text" class="kentei-input kentei-result-text" style="display:none;"></div>
+            <div class="kentei-word-footer">
+              <button id="kentei-finish-btn" class="primary-btn" data-mode="check">完了</button>
+            </div>
           </div>
         </div>
 
