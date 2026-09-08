@@ -8,8 +8,6 @@ const state = {
   difficulty: "easy",
   duration: DEFAULT_DURATION,
   conversionMode: "off", // "off": 変換なし(ローマ字を直接判定) / "on": 変換あり(実際のIMEで<input>に入力)
-  conversionModeBeforeKentei: null, // 検定ジャンルに入る前のconversionModeを退避しておく
-  punctuationMode: "on", // "on": ！？を含む問題も出題する / "off": ！？を含む問題を除外する
   currentItem: null,
   pool: [],
   queue: [],
@@ -19,8 +17,16 @@ const state = {
   rafId: null,
   lastStatsRenderAt: 0,
   roundOver: false,
-  roundStats: { correct: 0, miss: 0, itemsDone: 0, keyMissMap: {}, keyAttemptMap: {} }
+  roundStats: { correct: 0, miss: 0, itemsDone: 0, keyMissMap: {}, keyAttemptMap: {} },
+  // 全商ビジネス文書検定モード用: 直前までに確定した問題の正誤カウント。
+  // (現在入力中の問題の分は入力のたびに再計算して roundStats に上乗せする)
+  kenteiCompletedCorrect: 0,
+  kenteiCompletedMiss: 0
 };
+
+function isKenteiCategory() {
+  return state.category === "kentei";
+}
 
 const els = {
   setupScreen: document.getElementById("setup-screen"),
@@ -32,14 +38,15 @@ const els = {
   genreButtons: document.querySelectorAll(".subgenre-bar .genre-btn"),
   durationButtons: document.querySelectorAll(".duration-btn"),
   modeButtons: document.querySelectorAll(".mode-btn"),
-  punctuationButtons: document.querySelectorAll(".punctuation-btn"),
   displayLine: document.getElementById("display-line"),
   romajiLine: document.getElementById("romaji-line"),
   imeInput: document.getElementById("ime-input"),
-  kenteiColumns: document.getElementById("kentei-columns"),
+  normalLayout: document.getElementById("normal-layout"),
+  kenteiLayout: document.getElementById("kentei-layout"),
   kenteiProblemText: document.getElementById("kentei-problem-text"),
   kenteiInput: document.getElementById("kentei-input"),
-  modeSettingBlock: document.getElementById("mode-setting-block"),
+  inputModeBlock: document.getElementById("input-mode-block"),
+  kenteiModeNote: document.getElementById("kentei-mode-note"),
   progressLabel: document.getElementById("progress-label"),
   speedOut: document.getElementById("speed-out"),
   timeOut: document.getElementById("time-out"),
@@ -121,16 +128,6 @@ function renderWeakKeys() {
   });
 }
 
-// 1問あたりの文字数がこれを超えたら「長文」とみなし、中央揃えをやめて
-// 左揃え+自動スクロール追従に切り替える(ビジネス文書検定の速度問題など)。
-const LONG_TEXT_THRESHOLD = 60;
-
-function applyLongTextLayout(item) {
-  const isLong = item.kana.length > LONG_TEXT_THRESHOLD;
-  els.displayLine.classList.toggle("long-text", isLong);
-  els.romajiLine.classList.toggle("long-text", isLong);
-}
-
 // お題が変わったタイミングで1回だけ、モーラごとの入れ物(span)を作る。
 // 完了済み・未着手のモーラは以後書き換えないので、再描画コストがかからない。
 function buildRomajiLine() {
@@ -169,12 +166,6 @@ function updateCurrentUnitSpan() {
     .join("");
 
   keyboard.highlightExpected(engine.nextExpectedKeys());
-
-  // 長文では現在位置が画面外に出ることがあるため、追従スクロールする。
-  // (短文では常に画面内に収まっているので実質何もしない)
-  if (els.romajiLine.classList.contains("long-text")) {
-    span.scrollIntoView({ block: "center", behavior: "smooth" });
-  }
 }
 
 // 1モーラ打ち終えたタイミングで、そのモーラの表示を確定させ、次のモーラへ移る。
@@ -240,10 +231,6 @@ function refillQueueIfNeeded() {
   }
 }
 
-function isKenteiMode() {
-  return state.genre === "kentei";
-}
-
 function nextItem() {
   if (state.roundOver) return;
   refillQueueIfNeeded();
@@ -251,18 +238,18 @@ function nextItem() {
   state.currentItem = item;
   els.progressLabel.textContent = `${state.roundStats.itemsDone + 1}問目`;
 
-  if (isKenteiMode()) {
-    // 検定(速度)モード: 読み仮名は使わず、実際の文章(display)をそのまま
-    // 問題文として左ペインに出し、右のWord風欄に実入力させる。
+  if (isKenteiCategory()) {
+    // 検定モード: ふりがな判定は使わず、問題文をそのまま表示して
+    // 右側の入力欄(textarea)に実際に文章を入力してもらう。
     els.kenteiProblemText.textContent = item.display;
     els.kenteiInput.value = "";
     els.kenteiInput.classList.remove("ime-wrong");
+    els.kenteiInput.disabled = false;
     els.kenteiInput.focus();
     return;
   }
 
   els.displayLine.textContent = item.display;
-  applyLongTextLayout(item);
 
   if (state.conversionMode === "on") {
     els.imeInput.value = "";
@@ -283,31 +270,26 @@ function startRound() {
     : state.genre === "dev" ? DEV_SENTENCES
     : state.genre === "kentei" ? KENTEI_SENTENCES
     : SENTENCE_SETS[state.difficulty];
-
-  // 「！？を除く」設定の場合、感嘆符・疑問符を含む問題をプールから取り除く。
-  // (対象ジャンル内に該当問題が1つもない場合はそのまま全件を使う)
-  if (state.punctuationMode === "off") {
-    const filtered = state.pool.filter(item => !/[！？]/.test(item.kana));
-    if (filtered.length > 0) state.pool = filtered;
-  }
-
   state.queue = shuffle(state.pool);
   state.startTime = null;
   state.roundOver = false;
+  state.kenteiCompletedCorrect = 0;
+  state.kenteiCompletedMiss = 0;
   stopTicking();
   state.roundStats = { correct: 0, miss: 0, itemsDone: 0, keyMissMap: {}, keyAttemptMap: {} };
   els.resultPanel.style.display = "none";
   els.focusHint.style.display = "block";
 
-  const isKentei = isKenteiMode();
+  const isKentei = isKenteiCategory();
   const isConversion = state.conversionMode === "on";
-  els.kenteiColumns.style.display = isKentei ? "flex" : "none";
-  els.displayLine.style.display = isKentei ? "none" : "block";
+
+  els.normalLayout.style.display = isKentei ? "none" : "block";
+  els.kenteiLayout.style.display = isKentei ? "flex" : "none";
   els.imeInput.style.display = !isKentei && isConversion ? "block" : "none";
   els.romajiLine.style.display = !isKentei && !isConversion ? "block" : "none";
   els.keyboardContainer.style.display = !isKentei && !isConversion ? "flex" : "none";
   els.focusHint.textContent = isKentei
-    ? "右側の欄に入力してEnterで確定してください(IMEで変換できます) / Escでホームに戻れます"
+    ? "右側の入力欄に、左の問題文と同じ文章を入力してください / Escでホームに戻れます"
     : isConversion
     ? "入力してEnterで確定してください(IMEで変換できます) / Escでホームに戻れます"
     : "キーボードで入力を開始してください / Escでホームに戻れます";
@@ -335,6 +317,8 @@ function finishRound() {
   els.displayLine.textContent = "";
   els.imeInput.value = "";
   els.imeInput.blur();
+  els.kenteiInput.disabled = true;
+  els.kenteiInput.blur();
   els.progressLabel.textContent = "完了";
   keyboard.highlightExpected([]);
   els.resultPanel.style.display = "block";
@@ -422,58 +406,51 @@ function handleImeKeydown(e) {
 els.imeInput.addEventListener("input", handleImeInput);
 els.imeInput.addEventListener("keydown", handleImeKeydown);
 
-// --- 検定(速度)モード: 右ペインのWord風入力欄も、変換ありモードと同じ
-//     「Enterで確定・display全文と完全一致か判定」の仕組みを使う ---
+// --- 全商ビジネス文書検定モード: 実際のWordのように自由に入力させ、
+//     入力のたびに問題文と1文字ずつ突き合わせて正誤を数える。
+//     (IMEの変換途中でも値は変わるが、途中経過はあくまで目安として扱う) ---
+function gradeKenteiTyped(typed, target) {
+  const len = Math.min(typed.length, target.length);
+  let correct = 0;
+  let miss = 0;
+  for (let i = 0; i < len; i++) {
+    if (typed[i] === target[i]) correct++;
+    else miss++;
+  }
+  // 問題文より長く打ちすぎた分もミス扱いにする
+  if (typed.length > target.length) miss += typed.length - target.length;
+  return { correct, miss };
+}
+
 function handleKenteiInput() {
-  if (!state.startTime && !state.roundOver) {
+  if (state.roundOver || !state.currentItem) return;
+  if (!state.startTime) {
     state.startTime = Date.now();
     startTicking();
   }
-}
 
-function handleKenteiKeydown(e) {
-  if (!isKenteiMode() || state.roundOver) return;
-  if (e.key !== "Enter") return;
-  if (e.isComposing || e.keyCode === 229) return;
+  const typed = els.kenteiInput.value;
+  const target = state.currentItem.display;
+  const { correct, miss } = gradeKenteiTyped(typed, target);
 
-  e.preventDefault();
-  const typed = els.kenteiInput.value.trim();
-  if (!typed) return;
+  state.roundStats.correct = state.kenteiCompletedCorrect + correct;
+  state.roundStats.miss = state.kenteiCompletedMiss + miss;
 
-  if (typed === state.currentItem.display) {
-    state.roundStats.correct += typed.length;
+  const isMismatchAtEnd = typed.length > 0 && typed[typed.length - 1] !== target[typed.length - 1];
+  els.kenteiInput.classList.toggle("ime-wrong", isMismatchAtEnd);
+
+  updateStatsDisplay();
+
+  if (typed.length >= target.length) {
+    state.kenteiCompletedCorrect += correct;
+    state.kenteiCompletedMiss += miss;
     state.roundStats.itemsDone++;
-    els.kenteiInput.classList.remove("ime-wrong");
-    updateStatsDisplay();
+    els.kenteiInput.disabled = true;
     setTimeout(nextItem, 150);
-  } else {
-    state.roundStats.miss++;
-    els.kenteiInput.classList.add("ime-wrong");
-    setTimeout(() => els.kenteiInput.classList.remove("ime-wrong"), 300);
-    updateStatsDisplay();
   }
 }
 
 els.kenteiInput.addEventListener("input", handleKenteiInput);
-els.kenteiInput.addEventListener("keydown", handleKenteiKeydown);
-
-// 検定(速度)ジャンルが選ばれている間は、変換なし/変換ありの選択自体が
-// 意味を持たない(常に実際のIME入力を使うため)ので設定を隠し、
-// 内部的には変換ありへ切り替えておく。他のジャンルに戻ったら、
-// 検定を選ぶ前の設定に戻す。
-function syncKenteiUi() {
-  const isKentei = isKenteiMode();
-  els.modeSettingBlock.style.display = isKentei ? "none" : "block";
-  if (isKentei) {
-    if (state.conversionModeBeforeKentei === null) {
-      state.conversionModeBeforeKentei = state.conversionMode;
-    }
-    state.conversionMode = "on";
-  } else if (state.conversionModeBeforeKentei !== null) {
-    state.conversionMode = state.conversionModeBeforeKentei;
-    state.conversionModeBeforeKentei = null;
-  }
-}
 
 // カテゴリ(タイピング/ビジネス系/IT系/プログラミング)を切り替える。
 // 各カテゴリ内で最後に選ばれていた(なければ先頭の)サブジャンルを、
@@ -496,7 +473,12 @@ els.categoryButtons.forEach(btn => {
       state.genre = activeSubBtn.dataset.genre;
       if (activeSubBtn.dataset.difficulty) state.difficulty = activeSubBtn.dataset.difficulty;
     }
-    syncKenteiUi();
+
+    // 検定モードでは「変換なし/変換あり」の切り替えを使わないため、
+    // ボタンを隠して代わりに説明文を表示する。
+    const isKentei = category === "kentei";
+    els.modeButtons.forEach(b => { b.style.display = isKentei ? "none" : ""; });
+    els.kenteiModeNote.style.display = isKentei ? "block" : "none";
   });
 });
 
@@ -511,7 +493,6 @@ els.genreButtons.forEach(btn => {
     if (btn.dataset.difficulty) {
       state.difficulty = btn.dataset.difficulty;
     }
-    syncKenteiUi();
   });
 });
 
@@ -528,14 +509,6 @@ els.modeButtons.forEach(btn => {
     els.modeButtons.forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     state.conversionMode = btn.dataset.mode;
-  });
-});
-
-els.punctuationButtons.forEach(btn => {
-  btn.addEventListener("click", () => {
-    els.punctuationButtons.forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    state.punctuationMode = btn.dataset.punctuation;
   });
 });
 
