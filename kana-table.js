@@ -59,3 +59,26 @@ const KANA_TABLE = {
 
 // 拗音・外来語の拡張かなを構成する「小さい母音相当」の2文字目
 const YOUON_SECOND = ["ゃ", "ゅ", "ょ", "ぁ", "ぃ", "ぅ", "ぇ", "ぉ"];
+
+// 拗音(きゃ/しゃ/ちゃ など)は「子音+母音」1打鍵の形式(kya など)に加えて、
+// 「子音のかな単体のローマ字」+「x/l」+「ya/yu/yo」という3打鍵形式
+// (例: きゃ → kixya / kilya)でも入力できるようにする。
+// 手動で全パターンを書き並べる代わりに、KANA_TABLE 本体から
+// 機械的に追加パターンを生成する。
+(() => {
+  const SMALL_YOUON_ROMAJI = { "ゃ": "ya", "ゅ": "yu", "ょ": "yo" };
+  for (const key of Object.keys(KANA_TABLE)) {
+    if (key.length !== 2) continue;
+    const base = key[0];
+    const small = key[1];
+    const smallRomaji = SMALL_YOUON_ROMAJI[small];
+    const basePatterns = KANA_TABLE[base];
+    if (!smallRomaji || !basePatterns) continue;
+
+    const extra = [];
+    for (const bp of basePatterns) {
+      extra.push(bp + "x" + smallRomaji, bp + "l" + smallRomaji);
+    }
+    KANA_TABLE[key] = [...KANA_TABLE[key], ...extra];
+  }
+})();
