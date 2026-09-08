@@ -232,6 +232,18 @@ summary:focus-visible {
 .romaji-done { color: var(--text-primary); }
 .romaji-pending { color: var(--text-muted); }
 
+/* 現在入力中の1モーラ(単位)を背景色で囲む。
+   スペースのように文字自体が見えない場合でも、
+   「今ここを打っている」位置が常にわかるようにするための表示。 */
+.romaji-unit {
+  display: inline-block;
+  min-width: 0.9ch;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--accent-bg);
+  box-shadow: 0 0 0 1px rgba(224, 129, 20, 0.35);
+}
+
 .ime-input {
   display: block;
   width: 100%;
