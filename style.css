@@ -531,6 +531,79 @@ body.kentei-active .app {
 
 .result-panel p { margin: 0 0 10px; color: var(--success); font-weight: 600; }
 
+.ranking-name-setup {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-bottom: 14px;
+  text-align: left;
+}
+
+.ranking-name-hint {
+  font-size: 13px;
+  color: var(--text-secondary) !important;
+  font-weight: 500 !important;
+}
+
+.ranking-name-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ranking-name-row input {
+  flex: 1;
+  min-width: 160px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+}
+
+.ranking-panel {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  text-align: left;
+}
+
+.ranking-title {
+  font-size: 13px !important;
+  color: var(--text-secondary) !important;
+  font-weight: 700 !important;
+  margin-bottom: 8px !important;
+}
+
+.ranking-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ranking-list li {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: var(--text-primary);
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+
+.ranking-list li.is-me {
+  background: var(--accent-bg);
+  font-weight: 700;
+}
+
+.ranking-rank {
+  width: 1.8em;
+  display: inline-block;
+  color: var(--text-muted);
+}
+
 .primary-btn {
   background: var(--accent);
   color: #fff;
