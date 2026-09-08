@@ -142,7 +142,12 @@ function updateCurrentUnitSpan() {
   span.className = "romaji-unit";
   span.innerHTML = pattern
     .split("")
-    .map((ch, i) => `<span class="${i < typedLen ? "romaji-done" : "romaji-pending"}">${ch}</span>`)
+    .map((ch, i) => {
+      // 「re」「mu」のようなローマ字2文字セット全体ではなく、
+      // 次に打つべき1文字だけをハイライトする。
+      const cls = i < typedLen ? "romaji-done" : i === typedLen ? "romaji-current" : "romaji-pending";
+      return `<span class="${cls}">${ch}</span>`;
+    })
     .join("");
 
   keyboard.highlightExpected(engine.nextExpectedKeys());
