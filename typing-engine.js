@@ -24,9 +24,20 @@ function segmentKana(kanaStr) {
       if (chars[j + 1] && YOUON_SECOND.includes(chars[j + 1])) {
         key = chars[j] + chars[j + 1];
       }
+      // 標準的な「次の子音を重ねる」形式(例: って→tte)に加えて、
+      // 促音そのものを xtu/ltu の3打鍵で単独入力する形式も受け付ける
+      // (例: って→xtute / ltute)。文末が「っ」で終わる(次に文字がない)
+      // ような例外的なケースでは、xtu/ltu 単独のみを受け付ける。
+      if (key === undefined) {
+        units.push({ display: "っ", patterns: ["xtu", "ltu"] });
+        i = j;
+        continue;
+      }
       const basePatterns = KANA_TABLE[key] || [key];
       const doubled = basePatterns.map(p => p[0] + p);
-      units.push({ display: "っ" + key, patterns: doubled });
+      const xtuForm = basePatterns.map(p => "xtu" + p);
+      const ltuForm = basePatterns.map(p => "ltu" + p);
+      units.push({ display: "っ" + key, patterns: [...doubled, ...xtuForm, ...ltuForm] });
       i = j + (key.length === 2 ? 2 : 1);
       continue;
     }
@@ -47,9 +58,10 @@ function segmentKana(kanaStr) {
       // 単語末尾の「ん」は実際の入力としては n 一回でも確定できるが、
       // 表示上は「最後の一文字だけ n では終われない」という誤解を避けるため
       // nn を優先パターンとして表示する(受理は従来通り n / nn どちらも可)。
-      const patterns = needsDouble ? ["nn", "n'"]
-        : isWordFinal ? ["nn", "n"]
-        : ["n", "nn"];
+      // "n"/"nn"/"n'" に加え、"xn" での単独入力も常に受け付ける。
+      const patterns = needsDouble ? ["nn", "n'", "xn"]
+        : isWordFinal ? ["nn", "n", "xn"]
+        : ["n", "nn", "xn"];
       units.push({ display: "ん", patterns });
       i++;
       continue;
