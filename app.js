@@ -385,11 +385,13 @@ function finishRound() {
 }
 
 // --- ランキング送信・表示 ---
-// 名前がまだ端末に保存されていない場合は先に名前入力フォームを出し、
+// ログイン中は public.users.name を毎回優先して使う。
+// ログインしておらず、名前もまだ端末に保存されていない場合は先に名前入力フォームを出し、
 // 登録ボタンが押されたタイミングで初めて送信する。2回目以降は自動送信。
 async function submitRankingResult(scoreInfo) {
   const mode = buildRankingMode(state);
-  const existingName = getRankingName();
+  const linkedName = await getLinkedRankingName();
+  const existingName = linkedName || getRankingName();
 
   if (existingName) {
     els.rankingNameSetup.style.display = "none";
