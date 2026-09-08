@@ -102,7 +102,7 @@ summary:focus-visible {
   margin-bottom: 0;
 }
 
-.difficulty-btn, .duration-btn, .mode-btn, .genre-btn, .category-btn {
+.difficulty-btn, .duration-btn, .mode-btn, .genre-btn {
   padding: 9px 16px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-strong);
@@ -114,13 +114,13 @@ summary:focus-visible {
   transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
 }
 
-.difficulty-btn:hover, .duration-btn:hover, .mode-btn:hover, .genre-btn:hover, .category-btn:hover {
+.difficulty-btn:hover, .duration-btn:hover, .mode-btn:hover, .genre-btn:hover {
   border-color: var(--accent);
   color: var(--accent-ink);
   background: var(--accent-bg);
 }
 
-.difficulty-btn.active, .duration-btn.active, .mode-btn.active, .genre-btn.active, .category-btn.active {
+.difficulty-btn.active, .duration-btn.active, .mode-btn.active, .genre-btn.active {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
@@ -129,15 +129,82 @@ summary:focus-visible {
 
 /* 色だけに頼らず、チェックマークでも選択中を示す */
 .difficulty-btn.active::before, .duration-btn.active::before,
-.mode-btn.active::before, .genre-btn.active::before, .category-btn.active::before {
+.mode-btn.active::before, .genre-btn.active::before {
   content: "✓ ";
 }
 
-/* カテゴリバー(タイピング/ビジネス系/IT系/プログラミング)は少し太字にして
-   その下のサブジャンルバーとの階層関係を分かりやすくする */
-.category-btn { font-size: 15px; font-weight: 600; }
-.category-bar { margin-bottom: 10px; }
-.subgenre-bar { margin-top: 2px; }
+.subgenre-bar { margin-top: 10px; }
+
+/* カテゴリ選択: 単なる同形の錠剤ボタンだと見分けがつきにくいため、
+   ジャンルごとに異なるアイコン(形)を持つ正方形寄りのカードにして
+   一瞬で違いが見分けられるようにする。色だけに頼らないよう、
+   選択中はアイコンの図形自体に加えて隅のチェックバッジでも示す。 */
+.category-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.category-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 78px;
+  padding: 12px 6px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+}
+
+.category-icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.category-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  background: var(--accent-bg);
+}
+
+.category-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.category-btn.active::after {
+  content: "✓";
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+@media (max-width: 480px) {
+  .category-bar { grid-template-columns: repeat(2, 1fr); }
+}
 
 /* 「はじめる」ボタン: スクロールしても追従させ、常に押せる位置に保つ */
 .start-btn {
@@ -273,7 +340,8 @@ summary:focus-visible {
   box-shadow: 0 0 0 3px var(--accent-bg);
 }
 
-.ime-input.ime-wrong {
+.ime-input.ime-wrong,
+.kentei-input.ime-wrong {
   border-color: var(--danger);
   box-shadow: 0 0 0 3px var(--danger-bg);
   animation: ime-shake 0.15s ease-in-out 0s 2;
@@ -284,74 +352,122 @@ summary:focus-visible {
   50% { transform: translateX(4px); }
 }
 
-/* ---------------------------- 全商ビジネス文書検定モード ---------------------------- */
-/* 左に問題文、右に実際のWordのような入力欄を並べる2カラムレイアウト */
+/* 長文(検定モードなど)の出題: 中央揃えだと読みにくいので左揃えにし、
+   画面に収まりきらない分は枠内スクロールで追従できるようにする。 */
+.display-line.long-text,
+.romaji-line.long-text {
+  text-align: left;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 12px 14px;
+  background: var(--surface-muted);
+  border-radius: var(--radius-sm);
+}
 
-.kentei-layout {
+/* ---------------------------- 検定(速度)モード ---------------------------- */
+/* 左に問題文、右に実際のWordの入力画面をイメージした用紙風の入力欄を並べる */
+
+.kentei-columns {
   display: flex;
   gap: 14px;
   margin-bottom: 1rem;
   align-items: stretch;
 }
 
-.kentei-pane {
+.kentei-problem-pane,
+.kentei-word-pane {
   flex: 1 1 50%;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
   background: var(--surface);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
-  padding: 0.75rem 0.85rem;
-  display: flex;
-  flex-direction: column;
+  overflow: hidden;
 }
 
 .kentei-pane-label {
-  margin: 0 0 8px;
+  margin: 0;
+  padding: 8px 14px;
   font-size: 12px;
   font-weight: 700;
   color: var(--text-secondary);
+  background: var(--surface-muted);
+  border-bottom: 1px solid var(--border);
+}
+
+/* 罫線の行の高さ(問題文・入力欄で共通)。ここを変えると両方の罫線間隔が揃って動く */
+.kentei-problem-pane,
+.kentei-word-pane {
+  --kentei-line-height: 28px;
 }
 
 .kentei-problem-text {
   margin: 0;
   flex: 1;
+  min-height: 220px;
+  padding: 14px 16px;
   white-space: pre-wrap;
   word-break: break-word;
   font-family: var(--font-sans);
   font-size: 15px;
-  line-height: 1.9;
+  line-height: var(--kentei-line-height);
   color: var(--text-primary);
+  /* Wordの原稿用紙のような横罫線を、行の高さぴったりに敷く */
+  background-image: linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+  background-size: 100% var(--kentei-line-height);
+  background-position: 0 calc(14px + var(--kentei-line-height) - 1px);
+  background-repeat: repeat-y;
 }
 
-.kentei-textarea {
+/* 実際のWordウィンドウをイメージした、信号機風の丸ボタンが並ぶツールバー */
+.kentei-word-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 14px;
+  background: var(--surface-muted);
+  border-bottom: 1px solid var(--border);
+}
+
+.kentei-word-toolbar span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--border-strong);
+}
+
+.kentei-word-toolbar span:nth-child(1) { background: #ff5f57; }
+.kentei-word-toolbar span:nth-child(2) { background: #febc2e; }
+.kentei-word-toolbar span:nth-child(3) { background: #28c840; }
+
+.kentei-input {
   flex: 1;
   width: 100%;
   min-height: 220px;
-  resize: vertical;
+  resize: none;
   box-sizing: border-box;
-  padding: 0.5rem 0.6rem;
-  border: 2px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  background: #fff;
+  border: none;
+  padding: 14px 16px;
+  background-color: #fff;
   color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: 15px;
-  line-height: 1.9;
+  line-height: var(--kentei-line-height);
+  /* 問題文と行の高さを揃えることで、左右で罫線の位置が一致するようにする */
+  background-image: linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+  background-size: 100% var(--kentei-line-height);
+  background-position: 0 calc(14px + var(--kentei-line-height) - 1px);
+  background-repeat: repeat-y;
 }
 
-.kentei-textarea:focus {
+.kentei-input:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-bg);
-}
-
-.kentei-textarea.ime-wrong {
-  border-color: var(--danger);
-  box-shadow: 0 0 0 3px var(--danger-bg);
+  box-shadow: inset 0 0 0 2px var(--accent-bg);
 }
 
 @media (max-width: 640px) {
-  .kentei-layout { flex-direction: column; }
+  .kentei-columns { flex-direction: column; }
 }
 
 .focus-hint {
