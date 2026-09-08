@@ -63,6 +63,12 @@ summary:focus-visible {
   padding: 2rem 1.25rem 3rem;
 }
 
+/* 検定(速度)モードは問題文・入力欄を1行30文字ぶん確保するため、
+   その間だけコンテナの横幅を広げて2カラムを横並びのまま保つ。 */
+body.kentei-active .app {
+  max-width: 1040px;
+}
+
 /* ---------------------------- ヘッダー ---------------------------- */
 
 .app-header { text-align: center; margin-bottom: 1.75rem; }
@@ -376,7 +382,12 @@ summary:focus-visible {
 
 .kentei-problem-pane,
 .kentei-word-pane {
-  flex: 1 1 50%;
+  flex: 0 0 auto;
+  /* 中の文章/入力欄には左右16pxずつの余白があるため、その分を上乗せして
+     テキストが実際に占める幅がちょうど30文字(30em)になるようにする。 */
+  box-sizing: content-box;
+  width: calc(30em + 32px);
+  max-width: 100%;
   min-width: 0;
   display: flex;
   flex-direction: column;
