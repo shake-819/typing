@@ -70,3 +70,90 @@ async function fetchRanking({ genre, difficulty, duration, limit = 5 }) {
     return [];
   }
 }
+
+// --- ページ最下部の「ジャンル別ランキング」セクション ---
+// こちらは制限時間(duration)を区別せず、そのジャンル(・難易度)の中で
+// 一番速い自己ベストだけを人ごとに集めて上位を出す。
+const GENRE_RANKING_DEFS = [
+  { genre: "difficulty", difficulty: "easy", label: "基本タイピング(易しい)" },
+  { genre: "difficulty", difficulty: "normal", label: "基本タイピング(ふつう)" },
+  { genre: "difficulty", difficulty: "hard", label: "基本タイピング(難しい)" },
+  { genre: "business", difficulty: "", label: "ビジネス用語" },
+  { genre: "email", difficulty: "", label: "メール" },
+  { genre: "it", difficulty: "", label: "IT用語" },
+  { genre: "dev", difficulty: "", label: "実務会話" },
+  { genre: "js", difficulty: "", label: "JS" },
+  { genre: "sql", difficulty: "", label: "SQL" },
+];
+
+// durationで絞らず全件から、名前ごとの最高speedだけをクライアント側で抜き出す
+// (同じ人が複数の制限時間で打っていても、一番速い記録だけを採用する)
+async function fetchGenreBestRanking(genre, difficulty, limit = 5) {
+  if (!rankingClient) return [];
+  try {
+    const { data, error } = await rankingClient
+      .from("typing_rankings")
+      .select("name, speed")
+      .eq("genre", genre)
+      .eq("difficulty", difficulty)
+      .order("speed", { ascending: false })
+      .limit(200);
+
+    if (error) throw error;
+
+    const seen = new Set();
+    const best = [];
+    for (const row of data || []) {
+      if (seen.has(row.name)) continue;
+      seen.add(row.name);
+      best.push(row);
+      if (best.length >= limit) break;
+    }
+    return best;
+  } catch (err) {
+    console.error("ジャンル別ランキング取得に失敗しました", err);
+    return [];
+  }
+}
+
+function escapeHtmlForRanking(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+async function renderGenreRankingOverview() {
+  const grid = document.getElementById("genre-ranking-grid");
+  if (!grid || !rankingClient) return;
+
+  // 先にカードの枠だけ全部出して、データはジャンルごとに届いた順に埋めていく
+  grid.innerHTML = GENRE_RANKING_DEFS.map(
+    (def, i) => `
+      <div class="genre-ranking-card" id="genre-ranking-card-${i}">
+        <h3>${escapeHtmlForRanking(def.label)}</h3>
+        <ol><li class="is-empty">読み込み中...</li></ol>
+      </div>`
+  ).join("");
+
+  GENRE_RANKING_DEFS.forEach(async (def, i) => {
+    const rows = await fetchGenreBestRanking(def.genre, def.difficulty);
+    const card = document.getElementById(`genre-ranking-card-${i}`);
+    if (!card) return;
+    const list = card.querySelector("ol");
+
+    if (rows.length === 0) {
+      list.innerHTML = `<li class="is-empty">まだ記録がありません</li>`;
+      return;
+    }
+
+    list.innerHTML = rows
+      .map(
+        (row, rank) =>
+          `<li><span>${rank + 1}位 ${escapeHtmlForRanking(row.name)}</span><span>${Number(row.speed).toFixed(1)} 打/秒</span></li>`
+      )
+      .join("");
+  });
+}
+
+document.addEventListener("DOMContentLoaded", renderGenreRankingOverview);
