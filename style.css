@@ -156,7 +156,28 @@ summary:focus-visible {
 .start-btn:hover { box-shadow: 0 6px 18px rgba(224, 129, 20, 0.42); }
 .start-btn:active { transform: translateY(1px); }
 
-.back-btn { display: inline-block; margin-bottom: 1.1rem; }
+.back-btn { display: inline-block; margin-bottom: 0; }
+
+/* 練習画面の上段: 左に戻るボタン、右上に常時表示の残り時間バッジ */
+.practice-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 1.1rem;
+}
+
+.timer-badge {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: var(--radius);
+  background: var(--surface-muted);
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
 
 /* PC幅: 設定カードを2列に並べて一覧性を上げる */
 @media (min-width: 640px) {
