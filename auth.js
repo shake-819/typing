@@ -12,19 +12,10 @@ const authLogoutBtn = document.getElementById("auth-logout-btn");
 const authMessageEl = document.getElementById("auth-message");
 
 // public.users からその人の表示名(name列)を取ってくる。取れなければメールアドレスで代用。
+// (ヘッダーの状態表示専用。ランキングのnameにはメールを使わない = getLinkedRankingName側で別途判定)
 async function fetchDisplayName(user) {
-  try {
-    const { data, error } = await rankingClient
-      .from("users")
-      .select("name")
-      .eq("id", user.id)
-      .single();
-
-    if (!error && data?.name) return data.name;
-  } catch (err) {
-    console.error("表示名の取得に失敗しました", err);
-  }
-  return user.email;
+  const name = await fetchProfileName(user.id);
+  return name || user.email;
 }
 
 async function refreshAuthUi() {
