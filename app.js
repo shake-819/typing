@@ -1,569 +1,476 @@
-/* ==========================================================================
-   タイピング練習 — スタイル定義(ライト基調・視認性/操作性優先)
-   方針:
-   - 設定項目ごとに枠付きカードで区切り、何をどこまで選ぶのか一目で分かるようにする
-   - 選択状態は色だけでなくチェックマークでも示す
-   - 横幅に余裕がある画面では設定カードを2列に整理し、縦スクロールを減らす
-   - 「はじめる」ボタンは追従(sticky)させ、迷わず押せる位置に保つ
-   ========================================================================== */
+const STORAGE_KEY = "typingPracticeStats";
+const DURATION_OPTIONS = [30, 60, 90, 120];
+const DEFAULT_DURATION = 30;
 
-:root {
-  --bg: #f6f6f4;
-  --surface: #ffffff;
-  --surface-muted: #f0f1ee;
-  --border: #e2e3dd;
-  --border-strong: #cfd0c8;
+const state = {
+  category: "typing", // "typing" / "business" / "it" / "programming"
+  genre: "difficulty", // "difficulty": 難易度別セット / "business": よく使うビジネス用語50 / "js": JS構文あるある50 / "sql": SQL構文あるある50
+  difficulty: "easy",
+  duration: DEFAULT_DURATION,
+  conversionMode: "off", // "off": 変換なし(ローマ字を直接判定) / "on": 変換あり(実際のIMEで<input>に入力)
+  currentItem: null,
+  pool: [],
+  queue: [],
+  engine: null,
+  unitEls: [],
+  startTime: null,
+  rafId: null,
+  lastStatsRenderAt: 0,
+  roundOver: false,
+  roundStats: { correct: 0, miss: 0, itemsDone: 0, keyMissMap: {}, keyAttemptMap: {} }
+};
 
-  --text-primary: #1e1f1c;
-  --text-secondary: #5a5b56;
-  --text-muted: #8c8d86;
+const els = {
+  setupScreen: document.getElementById("setup-screen"),
+  practiceScreen: document.getElementById("practice-screen"),
+  startBtn: document.getElementById("start-btn"),
+  backBtn: document.getElementById("back-btn"),
+  categoryButtons: document.querySelectorAll(".category-btn"),
+  subgenreGroups: document.querySelectorAll(".subgenre-bar"),
+  genreButtons: document.querySelectorAll(".subgenre-bar .genre-btn"),
+  durationButtons: document.querySelectorAll(".duration-btn"),
+  modeButtons: document.querySelectorAll(".mode-btn"),
+  displayLine: document.getElementById("display-line"),
+  romajiLine: document.getElementById("romaji-line"),
+  imeInput: document.getElementById("ime-input"),
+  progressLabel: document.getElementById("progress-label"),
+  speedOut: document.getElementById("speed-out"),
+  timeOut: document.getElementById("time-out"),
+  missOut: document.getElementById("miss-out"),
+  accuracyOut: document.getElementById("accuracy-out"),
+  keyboardContainer: document.getElementById("keyboard"),
+  statsGrid: document.getElementById("stats-grid"),
+  timeLabel: document.getElementById("time-label"),
+  timerBadge: document.getElementById("timer-badge"),
+  weakKeyList: document.getElementById("weak-key-list"),
+  resetStatsBtn: document.getElementById("reset-stats-btn"),
+  restartBtn: document.getElementById("restart-btn"),
+  resultPanel: document.getElementById("result-panel"),
+  resultText: document.getElementById("result-text"),
+  focusHint: document.getElementById("focus-hint")
+};
 
-  /* アクセント: キーキャップの琥珀色を、白背景でも読みやすい濃さに調整 */
-  --accent: #e08114;
-  --accent-ink: #2a1500;
-  --accent-bg: #fdf1de;
+const keyboard = new Keyboard(els.keyboardContainer);
 
-  --success: #1f9d55;
-  --success-bg: #e8f6ee;
-  --danger: #d64545;
-  --danger-bg: #fceaea;
-
-  --radius-sm: 8px;
-  --radius: 12px;
-  --radius-lg: 18px;
-
-  --font-sans: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: "JetBrains Mono", "SF Mono", "Menlo", "Consolas", monospace;
-}
-
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  font-family: var(--font-sans);
-  background: var(--bg);
-  color: var(--text-primary);
-  -webkit-font-smoothing: antialiased;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
-}
-
-button:focus-visible,
-input:focus-visible,
-summary:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.app {
-  max-width: 760px;
-  margin: 0 auto;
-  padding: 2rem 1.25rem 3rem;
-}
-
-/* ---------------------------- ヘッダー ---------------------------- */
-
-.app-header { text-align: center; margin-bottom: 1.75rem; }
-.app-header h1 { font-size: 24px; font-weight: 700; margin: 0 0 4px; }
-.subtitle { color: var(--text-secondary); font-size: 14px; margin: 0; }
-
-/* ---------------------------- 設定画面 ---------------------------- */
-
-#setup-screen {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-/* 各設定項目を独立したカードにして境界をはっきりさせる */
-.setting-block {
-  margin: 0;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1rem 1.1rem 1.15rem;
-}
-
-.setting-label {
-  text-align: left;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0 0 10px;
-}
-
-.difficulty-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: flex-start;
-  margin-bottom: 0;
-}
-
-.difficulty-btn, .duration-btn, .mode-btn, .genre-btn {
-  padding: 9px 16px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-strong);
-  background: var(--surface);
-  color: var(--text-secondary);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
-}
-
-.difficulty-btn:hover, .duration-btn:hover, .mode-btn:hover, .genre-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent-ink);
-  background: var(--accent-bg);
-}
-
-.difficulty-btn.active, .duration-btn.active, .mode-btn.active, .genre-btn.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-  font-weight: 700;
-}
-
-/* 色だけに頼らず、チェックマークでも選択中を示す */
-.difficulty-btn.active::before, .duration-btn.active::before,
-.mode-btn.active::before, .genre-btn.active::before {
-  content: "✓ ";
-}
-
-.subgenre-bar { margin-top: 10px; }
-
-/* カテゴリ選択: 単なる同形の錠剤ボタンだと見分けがつきにくいため、
-   ジャンルごとに異なるアイコン(形)を持つ正方形寄りのカードにして
-   一瞬で違いが見分けられるようにする。色だけに頼らないよう、
-   選択中はアイコンの図形自体に加えて隅のチェックバッジでも示す。 */
-.category-bar {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.category-btn {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  min-height: 78px;
-  padding: 12px 6px 10px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border-strong);
-  background: var(--surface);
-  color: var(--text-secondary);
-  font-size: 12.5px;
-  font-weight: 600;
-  line-height: 1.3;
-  cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
-}
-
-.category-icon {
-  width: 22px;
-  height: 22px;
-  flex-shrink: 0;
-}
-
-.category-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent-ink);
-  background: var(--accent-bg);
-}
-
-.category-btn.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-}
-
-.category-btn.active::after {
-  content: "✓";
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #fff;
-  color: var(--accent);
-  font-size: 11px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-}
-
-@media (max-width: 480px) {
-  .category-bar { grid-template-columns: repeat(2, 1fr); }
-}
-
-/* 「はじめる」ボタン: スクロールしても追従させ、常に押せる位置に保つ */
-.start-btn {
-  position: sticky;
-  bottom: 14px;
-  z-index: 5;
-  display: block;
-  width: 100%;
-  margin: 4px auto 0;
-  padding: 15px;
-  border-radius: var(--radius);
-  border: none;
-  background: var(--accent);
-  color: #fff;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: 0 4px 14px rgba(224, 129, 20, 0.35);
-  transition: box-shadow 0.15s ease, transform 0.08s ease;
-}
-
-.start-btn:hover { box-shadow: 0 6px 18px rgba(224, 129, 20, 0.42); }
-.start-btn:active { transform: translateY(1px); }
-
-.back-btn { display: inline-block; margin-bottom: 0; }
-
-/* 練習画面の上段: 左に戻るボタン、右上に常時表示の残り時間バッジ */
-.practice-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 1.1rem;
-}
-
-.timer-badge {
-  flex-shrink: 0;
-  padding: 6px 14px;
-  border-radius: var(--radius);
-  background: var(--surface-muted);
-  color: var(--text-primary);
-  font-weight: 700;
-  font-size: 14px;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-/* PC幅: 設定カードを2列に並べて一覧性を上げる */
-@media (min-width: 640px) {
-  #setup-screen {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 14px;
-    align-items: start;
-  }
-  .start-btn, .weak-key-panel {
-    grid-column: 1 / -1;
+function loadStats() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : { keyMissMap: {}, keyAttemptMap: {} };
+  } catch (e) {
+    return { keyMissMap: {}, keyAttemptMap: {} };
   }
 }
 
-/* ---------------------------- 練習画面 ---------------------------- */
-
-.practice-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 1.75rem 1.5rem;
+function saveStats(stats) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(stats));
 }
 
-.progress-label {
-  text-align: center;
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin: 0 0 1rem;
+function mergeKeyMaps(target, source) {
+  Object.entries(source).forEach(([k, v]) => {
+    target[k] = (target[k] || 0) + v;
+  });
 }
 
-.display-line {
-  text-align: center;
-  font-size: 22px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0 0 0.75rem;
-  line-height: 1.5;
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 }
 
-.romaji-line {
-  text-align: center;
-  font-family: var(--font-mono);
-  font-size: 20px;
-  font-weight: 500;
-  letter-spacing: 0.5px;
-  margin-bottom: 1rem;
-  min-height: 28px;
-  word-break: break-all;
-  line-height: 1.6;
+function isUnlimitedMode() {
+  return state.duration === Infinity;
 }
 
-.romaji-done { color: var(--text-primary); }
-.romaji-pending { color: var(--text-muted); }
+function renderWeakKeys() {
+  const stats = loadStats();
+  const entries = Object.keys(stats.keyAttemptMap)
+    .map(k => {
+      const attempts = stats.keyAttemptMap[k] || 0;
+      const misses = stats.keyMissMap[k] || 0;
+      const rate = attempts > 0 ? misses / attempts : 0;
+      return { key: k, attempts, misses, rate };
+    })
+    .filter(e => e.misses > 0)
+    .sort((a, b) => b.rate - a.rate || b.misses - a.misses)
+    .slice(0, 6);
 
-/* 次に打つべき1文字だけを背景色で囲む。
-   「re」「mu」のような2文字セットまとめてではなく1文字単位でハイライトするため、
-   スペースのように文字自体が見えない場合でも、打つべき位置がピンポイントでわかる。 */
-.romaji-current {
-  display: inline-block;
-  min-width: 0.9ch;
-  padding: 1px 4px;
-  border-radius: 4px;
-  background: var(--accent-bg);
-  box-shadow: 0 0 0 1px rgba(224, 129, 20, 0.35);
+  els.weakKeyList.innerHTML = "";
+  if (entries.length === 0) {
+    els.weakKeyList.innerHTML = '<p class="muted-text">まだミスの記録がありません</p>';
+    return;
+  }
+  entries.forEach(e => {
+    const row = document.createElement("div");
+    row.className = "weak-key-row";
+    row.innerHTML = `
+      <span class="weak-key-label">${e.key.toUpperCase()}</span>
+      <div class="weak-key-bar-track"><div class="weak-key-bar-fill" style="width:${Math.round(e.rate * 100)}%"></div></div>
+      <span class="weak-key-count">${e.misses}回 / ${e.attempts}回中</span>
+    `;
+    els.weakKeyList.appendChild(row);
+  });
 }
 
-.ime-input {
-  display: block;
-  width: 100%;
-  box-sizing: border-box;
-  text-align: center;
-  font-size: 22px;
-  font-weight: 600;
-  min-height: 32px;
-  margin-bottom: 0.75rem;
-  padding: 0.55rem 0.8rem;
-  background: var(--surface);
-  border: 2px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-family: var(--font-mono);
+// お題が変わったタイミングで1回だけ、モーラごとの入れ物(span)を作る。
+// 完了済み・未着手のモーラは以後書き換えないので、再描画コストがかからない。
+function buildRomajiLine() {
+  const engine = state.engine;
+  const fragment = document.createDocumentFragment();
+  state.unitEls = engine.units.map(unit => {
+    const span = document.createElement("span");
+    span.className = "romaji-pending";
+    span.textContent = unit.patterns[0];
+    fragment.appendChild(span);
+    return span;
+  });
+  els.romajiLine.innerHTML = "";
+  els.romajiLine.appendChild(fragment);
+  updateCurrentUnitSpan();
 }
 
-.ime-input:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-bg);
+// 現在入力中のモーラ1つ分だけを更新する(打鍵のたびに呼ばれる軽量な処理)。
+function updateCurrentUnitSpan() {
+  const engine = state.engine;
+  const idx = engine.currentUnitIndex;
+  if (idx >= state.unitEls.length) return;
+
+  const span = state.unitEls[idx];
+  const pattern = engine.displayPatternForCurrentUnit();
+  const typedLen = engine.typedBuffer.length;
+  span.className = "romaji-unit";
+  span.innerHTML = pattern
+    .split("")
+    .map((ch, i) => {
+      // 「re」「mu」のようなローマ字2文字セット全体ではなく、
+      // 次に打つべき1文字だけをハイライトする。
+      const cls = i < typedLen ? "romaji-done" : i === typedLen ? "romaji-current" : "romaji-pending";
+      return `<span class="${cls}">${ch}</span>`;
+    })
+    .join("");
+
+  keyboard.highlightExpected(engine.nextExpectedKeys());
 }
 
-.ime-input.ime-wrong {
-  border-color: var(--danger);
-  box-shadow: 0 0 0 3px var(--danger-bg);
-  animation: ime-shake 0.15s ease-in-out 0s 2;
+// 1モーラ打ち終えたタイミングで、そのモーラの表示を確定させ、次のモーラへ移る。
+function completeCurrentUnitSpan(completedIdx) {
+  const engine = state.engine;
+  const span = state.unitEls[completedIdx];
+  span.className = "romaji-done";
+  span.textContent = engine.units[completedIdx].patterns[0];
+
+  if (!engine.isDone) {
+    updateCurrentUnitSpan();
+  } else {
+    keyboard.highlightExpected([]);
+  }
 }
 
-@keyframes ime-shake {
-  0%, 100% { transform: translateX(0); }
-  50% { transform: translateX(4px); }
+function updateStatsDisplay() {
+  const elapsed = state.startTime ? (Date.now() - state.startTime) / 1000 : 0;
+  const remaining = isUnlimitedMode() ? elapsed : Math.max(state.duration - elapsed, 0);
+  const speed = elapsed > 0 ? (state.roundStats.correct / Math.min(elapsed, isUnlimitedMode() ? elapsed : state.duration)) : 0;
+  const totalKeys = state.roundStats.correct + state.roundStats.miss;
+  const accuracy = totalKeys > 0 ? (state.roundStats.correct / totalKeys) * 100 : 100;
+
+  els.speedOut.innerHTML = speed.toFixed(1) + '<span class="unit-label"> 打/秒</span>';
+  els.timeOut.innerHTML = remaining.toFixed(1) + '<span class="unit-label"> 秒</span>';
+  els.missOut.textContent = state.roundStats.miss;
+  els.accuracyOut.innerHTML = accuracy.toFixed(0) + '<span class="unit-label">%</span>';
+  els.timerBadge.textContent = (isUnlimitedMode() ? "経過 " : "残り ") + remaining.toFixed(1) + "秒";
 }
 
-.focus-hint {
-  text-align: center;
-  font-size: 13px;
-  color: var(--text-muted);
-  margin-bottom: 1rem;
+const STATS_UPDATE_INTERVAL_MS = 100;
+
+function tick() {
+  const elapsed = (Date.now() - state.startTime) / 1000;
+  if (elapsed >= state.duration) {
+    updateStatsDisplay();
+    finishRound();
+    return;
+  }
+  // DOM書き換え(innerHTML)は重いので、時間経過のチェックだけ軽く毎フレーム行い、
+  // 実際の表示更新は100ms間隔に間引く。人の目には十分滑らかに見える頻度。
+  const now = Date.now();
+  if (now - state.lastStatsRenderAt >= STATS_UPDATE_INTERVAL_MS) {
+    state.lastStatsRenderAt = now;
+    updateStatsDisplay();
+  }
+  state.rafId = requestAnimationFrame(tick);
 }
 
-.result-panel {
-  text-align: center;
-  background: var(--success-bg);
-  border-radius: var(--radius);
-  padding: 1rem;
-  margin-bottom: 1rem;
+function startTicking() {
+  cancelAnimationFrame(state.rafId);
+  state.lastStatsRenderAt = 0;
+  state.rafId = requestAnimationFrame(tick);
 }
 
-.result-panel p { margin: 0 0 10px; color: var(--success); font-weight: 600; }
-
-.primary-btn {
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius-sm);
-  padding: 9px 22px;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
+function stopTicking() {
+  cancelAnimationFrame(state.rafId);
 }
 
-.primary-btn:hover { opacity: 0.92; }
-
-.ghost-btn {
-  background: transparent;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  padding: 7px 14px;
-  font-size: 13px;
-  color: var(--text-secondary);
-  cursor: pointer;
+function refillQueueIfNeeded() {
+  if (state.queue.length === 0) {
+    state.queue = shuffle(state.pool);
+  }
 }
 
-.ghost-btn:hover { border-color: var(--accent); color: var(--accent-ink); }
+function nextItem() {
+  if (state.roundOver) return;
+  refillQueueIfNeeded();
+  const item = state.queue.shift();
+  state.currentItem = item;
+  els.displayLine.textContent = item.display;
+  els.progressLabel.textContent = `${state.roundStats.itemsDone + 1}問目`;
 
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-  margin-bottom: 1.5rem;
+  if (state.conversionMode === "on") {
+    els.imeInput.value = "";
+    els.imeInput.classList.remove("ime-wrong");
+    els.imeInput.focus();
+  } else {
+    state.engine = new TypingEngine(item.kana, { caseSensitive: state.genre === "js" || state.genre === "sql" });
+    buildRomajiLine();
+  }
 }
 
-.stat-box {
-  background: var(--surface-muted);
-  border-radius: var(--radius);
-  padding: 12px 8px;
-  text-align: center;
+function startRound() {
+  state.pool = state.genre === "business" ? BUSINESS_SENTENCES
+    : state.genre === "js" ? JS_SENTENCES
+    : state.genre === "sql" ? SQL_SENTENCES
+    : state.genre === "it" ? IT_SENTENCES
+    : state.genre === "email" ? EMAIL_SENTENCES
+    : state.genre === "dev" ? DEV_SENTENCES
+    : SENTENCE_SETS[state.difficulty];
+  state.queue = shuffle(state.pool);
+  state.startTime = null;
+  state.roundOver = false;
+  stopTicking();
+  state.roundStats = { correct: 0, miss: 0, itemsDone: 0, keyMissMap: {}, keyAttemptMap: {} };
+  els.resultPanel.style.display = "none";
+  els.focusHint.style.display = "block";
+
+  const isConversion = state.conversionMode === "on";
+  els.imeInput.style.display = isConversion ? "block" : "none";
+  els.romajiLine.style.display = isConversion ? "none" : "block";
+  els.keyboardContainer.style.display = isConversion ? "none" : "flex";
+  els.focusHint.textContent = isConversion
+    ? "入力してEnterで確定してください(IMEで変換できます) / Escでホームに戻れます"
+    : "キーボードで入力を開始してください / Escでホームに戻れます";
+
+  updateStatsDisplay();
+  els.statsGrid.style.display = "none";
+  els.timeLabel.textContent = isUnlimitedMode() ? "経過時間" : "残り時間";
+  els.timeOut.innerHTML = (isUnlimitedMode() ? "0.0" : state.duration.toFixed(1)) + '<span class="unit-label"> 秒</span>';
+  nextItem();
 }
 
-.stat-label { font-size: 12px; color: var(--text-secondary); margin: 0 0 4px; }
-.stat-value { font-size: 20px; font-weight: 700; margin: 0; font-family: var(--font-mono); }
-.unit-label { font-size: 11px; font-weight: 400; color: var(--text-secondary); }
+function finishRound() {
+  if (state.roundOver) return;
+  state.roundOver = true;
+  stopTicking();
+  const stored = loadStats();
+  mergeKeyMaps(stored.keyMissMap, state.roundStats.keyMissMap);
+  mergeKeyMaps(stored.keyAttemptMap, state.roundStats.keyAttemptMap);
+  saveStats(stored);
+  renderWeakKeys();
 
-/* ---------------------------- 仮想キーボード ---------------------------- */
-
-.keyboard-jis {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: center;
-  background: #17181c;
-  border: 3px solid #3a3b40;
-  border-radius: 22px;
-  padding: 18px 16px;
-  width: fit-content;
-  max-width: 100%;
-  margin: 0 auto;
+  const elapsed = state.startTime ? Math.min((Date.now() - state.startTime) / 1000, state.duration) : 0;
+  const speed = elapsed > 0 ? (state.roundStats.correct / elapsed).toFixed(1) : "0.0";
+  els.romajiLine.innerHTML = "";
+  els.displayLine.textContent = "";
+  els.imeInput.value = "";
+  els.imeInput.blur();
+  els.progressLabel.textContent = "完了";
+  keyboard.highlightExpected([]);
+  els.resultPanel.style.display = "block";
+  els.statsGrid.style.display = "";
+  els.resultText.textContent = `${state.roundStats.itemsDone}問・平均速度 ${speed} 打/秒・ミス ${state.roundStats.miss} 回`;
 }
 
-.kb-row { display: flex; gap: 6px; }
+// --- 変換なしモード: ローマ字を1キーずつモーラ単位で判定する ---
+function handleKeydown(e) {
+  if (state.conversionMode !== "off") return;
+  if (!state.engine || state.engine.isDone || state.roundOver) return;
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
 
-.kb-key {
-  min-width: 32px;
-  height: 34px;
-  padding: 0 6px;
-  border-radius: 7px;
-  background: #0a0a0c;
-  border: 2px solid #d7d8db;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 600;
-  color: #e8e8ea;
-  text-transform: uppercase;
-  transition: background-color 0.1s ease, border-color 0.1s ease, color 0.1s ease;
-  box-sizing: border-box;
+  const key = e.key;
+  if (!isTypableKey(key)) return;
+  e.preventDefault();
+
+  if (!state.startTime) {
+    state.startTime = Date.now();
+    startTicking();
+  }
+
+  const result = state.engine.handleKey(key);
+  if (result.result === "ignored") return;
+
+  const completedIdx = state.engine.currentUnitIndex - 1;
+
+  if (result.result === "miss") {
+    state.roundStats.miss++;
+    state.roundStats.keyMissMap[result.key] = (state.roundStats.keyMissMap[result.key] || 0) + 1;
+    state.roundStats.keyAttemptMap[result.key] = (state.roundStats.keyAttemptMap[result.key] || 0) + 1;
+    keyboard.flashMiss(result.key);
+  } else {
+    state.roundStats.correct++;
+    state.roundStats.keyAttemptMap[result.key] = (state.roundStats.keyAttemptMap[result.key] || 0) + 1;
+  }
+
+  updateStatsDisplay();
+
+  if (result.result === "unit-complete") {
+    completeCurrentUnitSpan(completedIdx);
+    if (state.engine.isDone) {
+      state.roundStats.itemsDone++;
+      setTimeout(nextItem, 150);
+    }
+  } else if (result.result === "progress") {
+    updateCurrentUnitSpan();
+  }
 }
 
-.kb-key-blank {
-  background: transparent;
-  border-color: transparent;
+// --- 変換ありモード: 実際のIME入力を<input>にそのまま任せ、
+//     Enterが押された時点(IMEの変換確定中でないとき)に答え合わせをする ---
+function handleImeInput() {
+  if (!state.startTime && !state.roundOver) {
+    state.startTime = Date.now();
+    startTicking();
+  }
 }
 
-.kb-key-wide {
-  min-width: 56px;
-  font-size: 10px;
-  padding: 0 8px;
+function handleImeKeydown(e) {
+  if (state.conversionMode !== "on" || state.roundOver) return;
+  if (e.key !== "Enter") return;
+  // IMEで変換候補を確定させるためのEnter(変換中)は無視し、
+  // 完全に確定した状態でのEnterだけを「答え合わせ」として扱う。
+  if (e.isComposing || e.keyCode === 229) return;
+
+  e.preventDefault();
+  const typed = els.imeInput.value.trim();
+  if (!typed) return;
+
+  if (typed === state.currentItem.display) {
+    state.roundStats.correct += typed.length;
+    state.roundStats.itemsDone++;
+    els.imeInput.classList.remove("ime-wrong");
+    updateStatsDisplay();
+    setTimeout(nextItem, 150);
+  } else {
+    state.roundStats.miss++;
+    els.imeInput.classList.add("ime-wrong");
+    setTimeout(() => els.imeInput.classList.remove("ime-wrong"), 300);
+    updateStatsDisplay();
+  }
 }
 
-.kb-key-expected {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-  font-weight: 700;
+els.imeInput.addEventListener("input", handleImeInput);
+els.imeInput.addEventListener("keydown", handleImeKeydown);
+
+// カテゴリ(タイピング/ビジネス系/IT系/プログラミング)を切り替える。
+// 各カテゴリ内で最後に選ばれていた(なければ先頭の)サブジャンルを、
+// そのまま出題内容として反映する。
+els.categoryButtons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    els.categoryButtons.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    const category = btn.dataset.category;
+    state.category = category;
+
+    els.subgenreGroups.forEach(group => {
+      group.style.display = group.dataset.categoryGroup === category ? "flex" : "none";
+    });
+
+    const activeGroup = document.querySelector(`.subgenre-bar[data-category-group="${category}"]`);
+    const activeSubBtn = activeGroup.querySelector(".genre-btn.active") || activeGroup.querySelector(".genre-btn");
+    if (activeSubBtn) {
+      activeSubBtn.classList.add("active");
+      state.genre = activeSubBtn.dataset.genre;
+      if (activeSubBtn.dataset.difficulty) state.difficulty = activeSubBtn.dataset.difficulty;
+    }
+  });
+});
+
+// サブジャンル(易しい/ふつう/難しい、ビジネス用語/メール、など)の選択。
+// アクティブ状態の切り替えは同じグループ内だけで行う(他カテゴリの選択を消さない)。
+els.genreButtons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    const group = btn.closest(".subgenre-bar");
+    group.querySelectorAll(".genre-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    state.genre = btn.dataset.genre;
+    if (btn.dataset.difficulty) {
+      state.difficulty = btn.dataset.difficulty;
+    }
+  });
+});
+
+els.durationButtons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    els.durationButtons.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    state.duration = btn.dataset.duration === "unlimited" ? Infinity : parseInt(btn.dataset.duration, 10);
+  });
+});
+
+els.modeButtons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    els.modeButtons.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    state.conversionMode = btn.dataset.mode;
+  });
+});
+
+function showSetupScreen() {
+  stopTicking();
+  state.roundOver = true;
+  els.practiceScreen.style.display = "none";
+  els.setupScreen.style.display = "block";
+  renderWeakKeys();
 }
 
-.kb-key-shift-hint {
-  border-color: var(--accent);
-  color: var(--accent);
+function showPracticeScreen() {
+  els.setupScreen.style.display = "none";
+  els.practiceScreen.style.display = "block";
+  startRound();
 }
 
-.kb-key-miss {
-  background: var(--danger);
-  border-color: var(--danger);
-  color: #fff;
+els.startBtn.addEventListener("click", showPracticeScreen);
+els.backBtn.addEventListener("click", showSetupScreen);
+
+els.restartBtn.addEventListener("click", startRound);
+
+els.resetStatsBtn.addEventListener("click", () => {
+  localStorage.removeItem(STORAGE_KEY);
+  renderWeakKeys();
+});
+
+window.addEventListener("keydown", handleKeydown);
+window.addEventListener("keydown", () => {
+  // 既に非表示なら何もしない(打鍵のたびに毎回同じ値を書き込むだけの無駄を防ぐ)
+  if (els.focusHint.style.display !== "none") {
+    els.focusHint.style.display = "none";
+  }
+});
+
+// Escキー: 通常モードは即ホームへ。無制限モードは1回目で結果表示、2回目でホームへ。
+function handleEscKey(e) {
+  if (e.key !== "Escape") return;
+  if (els.practiceScreen.style.display === "none") return;
+  e.preventDefault();
+
+  if (isUnlimitedMode()) {
+    if (!state.roundOver) {
+      finishRound();
+    } else {
+      showSetupScreen();
+    }
+  } else {
+    showSetupScreen();
+  }
 }
+window.addEventListener("keydown", handleEscKey);
 
-@media (max-width: 480px) {
-  .kb-key { min-width: 22px; height: 28px; font-size: 10px; }
-  .kb-key-wide { min-width: 38px; font-size: 8px; }
-  .keyboard-jis { padding: 12px 8px; }
-}
-
-/* ---------------------------- 苦手キー(折りたたみ) ---------------------------- */
-
-.weak-key-panel {
-  margin: 0;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.85rem 1.1rem;
-}
-
-.weak-key-panel[open] { padding-bottom: 1.15rem; }
-
-.weak-key-panel summary {
-  cursor: pointer;
-  font-weight: 700;
-  font-size: 14px;
-  color: var(--text-primary);
-  list-style: none;
-  display: flex;
-  align-items: center;
-  padding: 0.15rem 0;
-}
-
-.weak-key-panel summary::-webkit-details-marker { display: none; }
-
-.weak-key-panel summary::before {
-  content: "▸";
-  display: inline-block;
-  margin-right: 8px;
-  color: var(--text-secondary);
-  transition: transform 0.15s ease;
-  font-size: 12px;
-}
-
-.weak-key-panel[open] summary::before {
-  transform: rotate(90deg);
-}
-
-.weak-key-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  margin: 12px 0 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
-}
-
-.weak-key-row {
-  display: grid;
-  grid-template-columns: 30px 1fr 116px;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
-  font-size: 13px;
-}
-
-.weak-key-label {
-  font-weight: 700;
-  text-align: center;
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-}
-
-.weak-key-bar-track {
-  height: 8px;
-  background: var(--surface-muted);
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.weak-key-bar-fill {
-  height: 100%;
-  background: var(--danger);
-  border-radius: 999px;
-}
-
-.weak-key-count { color: var(--text-secondary); text-align: right; font-family: var(--font-mono); }
-
-.muted-text { color: var(--text-muted); font-size: 13px; margin: 0; }
-
-@media (max-width: 480px) {
-  .stats-grid { grid-template-columns: repeat(2, 1fr); }
-  .practice-card { padding: 1.5rem 1rem; }
-}
+renderWeakKeys();
