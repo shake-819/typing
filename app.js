@@ -3,6 +3,7 @@ const DURATION_OPTIONS = [30, 60, 90, 120];
 const DEFAULT_DURATION = 30;
 
 const state = {
+  category: "typing", // "typing" / "business" / "it" / "programming"
   genre: "difficulty", // "difficulty": 難易度別セット / "business": よく使うビジネス用語50 / "js": JS構文あるある50 / "sql": SQL構文あるある50
   difficulty: "easy",
   duration: DEFAULT_DURATION,
@@ -24,9 +25,9 @@ const els = {
   practiceScreen: document.getElementById("practice-screen"),
   startBtn: document.getElementById("start-btn"),
   backBtn: document.getElementById("back-btn"),
-  difficultyButtons: document.querySelectorAll(".difficulty-btn"),
-  difficultySettingBlock: document.getElementById("difficulty-setting-block"),
-  genreButtons: document.querySelectorAll(".genre-btn"),
+  categoryButtons: document.querySelectorAll(".category-btn"),
+  subgenreGroups: document.querySelectorAll(".subgenre-bar"),
+  genreButtons: document.querySelectorAll(".subgenre-bar .genre-btn"),
   durationButtons: document.querySelectorAll(".duration-btn"),
   modeButtons: document.querySelectorAll(".mode-btn"),
   displayLine: document.getElementById("display-line"),
@@ -368,20 +369,41 @@ function handleImeKeydown(e) {
 els.imeInput.addEventListener("input", handleImeInput);
 els.imeInput.addEventListener("keydown", handleImeKeydown);
 
-els.difficultyButtons.forEach(btn => {
+// カテゴリ(タイピング/ビジネス系/IT系/プログラミング)を切り替える。
+// 各カテゴリ内で最後に選ばれていた(なければ先頭の)サブジャンルを、
+// そのまま出題内容として反映する。
+els.categoryButtons.forEach(btn => {
   btn.addEventListener("click", () => {
-    els.difficultyButtons.forEach(b => b.classList.remove("active"));
+    els.categoryButtons.forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
-    state.difficulty = btn.dataset.difficulty;
+    const category = btn.dataset.category;
+    state.category = category;
+
+    els.subgenreGroups.forEach(group => {
+      group.style.display = group.dataset.categoryGroup === category ? "flex" : "none";
+    });
+
+    const activeGroup = document.querySelector(`.subgenre-bar[data-category-group="${category}"]`);
+    const activeSubBtn = activeGroup.querySelector(".genre-btn.active") || activeGroup.querySelector(".genre-btn");
+    if (activeSubBtn) {
+      activeSubBtn.classList.add("active");
+      state.genre = activeSubBtn.dataset.genre;
+      if (activeSubBtn.dataset.difficulty) state.difficulty = activeSubBtn.dataset.difficulty;
+    }
   });
 });
 
+// サブジャンル(易しい/ふつう/難しい、ビジネス用語/メール、など)の選択。
+// アクティブ状態の切り替えは同じグループ内だけで行う(他カテゴリの選択を消さない)。
 els.genreButtons.forEach(btn => {
   btn.addEventListener("click", () => {
-    els.genreButtons.forEach(b => b.classList.remove("active"));
+    const group = btn.closest(".subgenre-bar");
+    group.querySelectorAll(".genre-btn").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     state.genre = btn.dataset.genre;
-    els.difficultySettingBlock.style.display = (state.genre === "business" || state.genre === "js" || state.genre === "sql" || state.genre === "it" || state.genre === "email" || state.genre === "dev") ? "none" : "block";
+    if (btn.dataset.difficulty) {
+      state.difficulty = btn.dataset.difficulty;
+    }
   });
 });
 
