@@ -26,6 +26,8 @@
           <button class="genre-btn" data-genre="js">JS構文あるある50</button>
           <button class="genre-btn" data-genre="sql">SQL構文あるある50</button>
           <button class="genre-btn" data-genre="it">IT業界用語50</button>
+          <button class="genre-btn" data-genre="email">メール実務50</button>
+          <button class="genre-btn" data-genre="dev">IT実務会話50</button>
         </div>
       </div>
 
@@ -71,7 +73,10 @@
 
     <!-- 練習画面 -->
     <section id="practice-screen" class="screen" style="display:none;">
-      <button id="back-btn" class="ghost-btn back-btn">← 設定に戻る</button>
+      <div class="practice-topbar">
+        <button id="back-btn" class="ghost-btn back-btn">← 設定に戻る</button>
+        <div class="timer-badge" id="timer-badge">残り 30.0秒</div>
+      </div>
 
       <main class="practice-card">
         <p class="progress-label" id="progress-label">1問目</p>
@@ -127,6 +132,8 @@
   <script src="js-sentences.js"></script>
   <script src="sql-sentences.js"></script>
   <script src="it-sentences.js"></script>
+  <script src="email-sentences.js"></script>
+  <script src="dev-sentences.js"></script>
   <script src="typing-engine.js"></script>
   <script src="keyboard.js"></script>
   <script src="app.js"></script>
