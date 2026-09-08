@@ -172,6 +172,21 @@
 
         <div class="result-panel" id="result-panel" style="display:none;">
           <p id="result-text"></p>
+
+          <!-- 名前は初回のみ入力し、localStorageに保存して以降は自動でランキングに送信する -->
+          <div class="ranking-name-setup" id="ranking-name-setup" style="display:none;">
+            <p class="ranking-name-hint">ランキングに載せる名前を最初に決めてください(以後この端末では自動で使われます)</p>
+            <div class="ranking-name-row">
+              <input type="text" id="ranking-name-input" maxlength="20" placeholder="名前(20文字まで)" />
+              <button id="ranking-name-save-btn" class="primary-btn">登録してランキングに送信</button>
+            </div>
+          </div>
+
+          <div class="ranking-panel" id="ranking-panel" style="display:none;">
+            <p class="ranking-title" id="ranking-title">このモードのランキング</p>
+            <ol class="ranking-list" id="ranking-list"></ol>
+          </div>
+
           <button id="restart-btn" class="primary-btn">もう一度</button>
         </div>
 
@@ -210,6 +225,8 @@
   <script src="kentei-sentences.js"></script>
   <script src="typing-engine.js"></script>
   <script src="keyboard.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="ranking.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
