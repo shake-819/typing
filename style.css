@@ -102,7 +102,7 @@ summary:focus-visible {
   margin-bottom: 0;
 }
 
-.difficulty-btn, .duration-btn, .mode-btn, .genre-btn {
+.difficulty-btn, .duration-btn, .mode-btn, .genre-btn, .category-btn {
   padding: 9px 16px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-strong);
@@ -114,13 +114,13 @@ summary:focus-visible {
   transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
 }
 
-.difficulty-btn:hover, .duration-btn:hover, .mode-btn:hover, .genre-btn:hover {
+.difficulty-btn:hover, .duration-btn:hover, .mode-btn:hover, .genre-btn:hover, .category-btn:hover {
   border-color: var(--accent);
   color: var(--accent-ink);
   background: var(--accent-bg);
 }
 
-.difficulty-btn.active, .duration-btn.active, .mode-btn.active, .genre-btn.active {
+.difficulty-btn.active, .duration-btn.active, .mode-btn.active, .genre-btn.active, .category-btn.active {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
@@ -129,9 +129,15 @@ summary:focus-visible {
 
 /* 色だけに頼らず、チェックマークでも選択中を示す */
 .difficulty-btn.active::before, .duration-btn.active::before,
-.mode-btn.active::before, .genre-btn.active::before {
+.mode-btn.active::before, .genre-btn.active::before, .category-btn.active::before {
   content: "✓ ";
 }
+
+/* カテゴリバー(タイピング/ビジネス系/IT系/プログラミング)は少し太字にして
+   その下のサブジャンルバーとの階層関係を分かりやすくする */
+.category-btn { font-size: 15px; font-weight: 600; }
+.category-bar { margin-bottom: 10px; }
+.subgenre-bar { margin-top: 2px; }
 
 /* 「はじめる」ボタン: スクロールしても追従させ、常に押せる位置に保つ */
 .start-btn {
