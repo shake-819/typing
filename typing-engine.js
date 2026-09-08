@@ -43,7 +43,13 @@ function segmentKana(kanaStr) {
     if (ch === "ん") {
       const next = chars[i + 1];
       const needsDouble = next && "あいうえおやゆよ".includes(next);
-      const patterns = needsDouble ? ["nn", "n'"] : ["n", "nn"];
+      const isWordFinal = next === undefined;
+      // 単語末尾の「ん」は実際の入力としては n 一回でも確定できるが、
+      // 表示上は「最後の一文字だけ n では終われない」という誤解を避けるため
+      // nn を優先パターンとして表示する(受理は従来通り n / nn どちらも可)。
+      const patterns = needsDouble ? ["nn", "n'"]
+        : isWordFinal ? ["nn", "n"]
+        : ["n", "nn"];
       units.push({ display: "ん", patterns });
       i++;
       continue;
