@@ -31,7 +31,7 @@
 
     <!-- 設定画面: ジャンル・難易度・時間を選んでから練習を始める -->
     <section id="setup-screen" class="screen">
-      <div class="setting-block">
+      <div class="setting-block" id="content-setting-block">
         <p class="setting-label">出題内容</p>
         <div class="category-bar" id="category-bar">
           <button class="category-btn active" data-category="typing">
@@ -65,17 +65,6 @@
             </svg>
             <span>プログラミング</span>
           </button>
-          <!-- 動作確認用のサンプル。実際のセンテンスができたら、
-               data-category を新しいカテゴリ名にして本物のsentencesファイルに差し替え、
-               data-locked-pack を sentence_packs.key と合わせてください。
-               不要ならこのボタンごと削除してOKです。 -->
-          <button class="category-btn is-locked" data-category="sample" data-locked-pack="sample">
-            <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="5" y="11" width="14" height="9" rx="1.5"/>
-              <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
-            </svg>
-            <span>サンプル(有料)</span>
-          </button>
         </div>
 
         <div class="difficulty-bar subgenre-bar" data-category-group="typing">
@@ -91,6 +80,12 @@
         <div class="difficulty-bar subgenre-bar" data-category-group="it" style="display:none;">
           <button class="genre-btn active" data-genre="it">IT用語</button>
           <button class="genre-btn" data-genre="dev">実務会話</button>
+          <!-- 動作確認用のサンプル。実際のセンテンスができたら、
+               data-genre を新しいジャンル名にして本物のsentencesファイルに差し替え、
+               app.jsのstartRound()にそのジャンルのpool分岐を追加し、
+               data-locked-pack を sentence_packs.key と合わせてください。
+               不要ならこのボタンごと削除してOKです。 -->
+          <button class="genre-btn is-locked" data-genre="sample" data-locked-pack="sample">サンプル(有料)</button>
         </div>
         <div class="difficulty-bar subgenre-bar" data-category-group="programming" style="display:none;">
           <button class="genre-btn active" data-genre="js">JS</button>
