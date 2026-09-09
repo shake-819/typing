@@ -25,8 +25,12 @@ async function refreshAuthUi() {
   const user = data?.user || null;
 
   if (user) {
-    const displayName = await fetchDisplayName(user);
-    authStatusEl.textContent = `${displayName} としてログイン中(記録が連携されます)`;
+    const [displayName, score] = await Promise.all([
+      fetchDisplayName(user),
+      fetchMyScore(),
+    ]);
+    const scoreText = score === null ? "" : `(保有 ${score}pt)`;
+    authStatusEl.textContent = `${displayName} としてログイン中${scoreText}`;
     authFormEl?.setAttribute("hidden", "");
     authLogoutBtn?.removeAttribute("hidden");
   } else {
