@@ -163,6 +163,7 @@ const RANKING_CATEGORIES = [
     genres: [
       { genre: "it", difficulty: "", label: "IT用語" },
       { genre: "dev", difficulty: "", label: "実務会話" },
+      { genre: "itpass", difficulty: "", label: "Iパス用語" },
     ],
   },
   {
