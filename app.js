@@ -271,6 +271,7 @@ function startRound() {
     : state.genre === "sql" ? SQL_SENTENCES
     : state.genre === "vba" ? VBA_SENTENCES
     : state.genre === "it" ? IT_SENTENCES
+    : state.genre === "itpass" ? ITPASS_SENTENCES
     : state.genre === "email" ? EMAIL_SENTENCES
     : state.genre === "dev" ? DEV_SENTENCES
     : SENTENCE_SETS[state.difficulty];
