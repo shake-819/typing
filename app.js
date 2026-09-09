@@ -649,6 +649,10 @@ function syncKenteiUi() {
 // そのまま出題内容として反映する。
 els.categoryButtons.forEach(btn => {
   btn.addEventListener("click", () => {
+    // ロック中(未アンロックの有料パック)は unlocks.js 側の購入フローに任せ、
+    // ここでは何もしない。
+    if (btn.classList.contains("is-locked")) return;
+
     els.categoryButtons.forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     const category = btn.dataset.category;
@@ -673,6 +677,10 @@ els.categoryButtons.forEach(btn => {
 // アクティブ状態の切り替えは同じグループ内だけで行う(他カテゴリの選択を消さない)。
 els.genreButtons.forEach(btn => {
   btn.addEventListener("click", () => {
+    // ロック中(未アンロックの有料パック)は unlocks.js 側の購入フローに任せ、
+    // ここでは何もしない。
+    if (btn.classList.contains("is-locked")) return;
+
     const group = btn.closest(".subgenre-bar");
     group.querySelectorAll(".genre-btn").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
