@@ -411,7 +411,7 @@ async function submitRankingResult(scoreInfo) {
 async function renderRanking(mode, myName) {
   els.rankingPanel.style.display = "block";
   els.rankingList.innerHTML = "<li>読み込み中...</li>";
-  const rows = await fetchRanking(mode);
+  const rows = await fetchGenreBestRanking(mode.genre, mode.difficulty);
 
   if (rows.length === 0) {
     els.rankingList.innerHTML = "<li>まだ記録がありません(あなたが1位です!)</li>";
