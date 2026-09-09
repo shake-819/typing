@@ -131,17 +131,50 @@ async function saveScoreToRanking({ name, genre, difficulty, duration, speed, ac
 // どちらもこの関数を使う。durationでは絞らず、名前ごとの最高speedだけを
 // クライアント側で抜き出す(同じ人が複数の制限時間で打っていても、
 // 一番速い記録だけを採用する)。
-const GENRE_RANKING_DEFS = [
-  { genre: "difficulty", difficulty: "easy", label: "基本タイピング(易しい)" },
-  { genre: "difficulty", difficulty: "normal", label: "基本タイピング(ふつう)" },
-  { genre: "difficulty", difficulty: "hard", label: "基本タイピング(難しい)" },
-  { genre: "business", difficulty: "", label: "ビジネス用語" },
-  { genre: "email", difficulty: "", label: "メール" },
-  { genre: "it", difficulty: "", label: "IT用語" },
-  { genre: "dev", difficulty: "", label: "実務会話" },
-  { genre: "js", difficulty: "", label: "JS" },
-  { genre: "sql", difficulty: "", label: "SQL" },
-  { genre: "vba", difficulty: "", label: "VBA(有料)" },
+//
+// 下部の「ジャンル別ランキング」は、出題内容選択(category-bar)と同じ
+// カテゴリ単位でタブ分けする。サブジャンルは今後どんどん増える想定なので、
+// フラットな一覧ではなくカテゴリごとにまとめておくことで、
+// 1) カード数が増えても見失いにくい 2) 選択中のカテゴリの分だけ
+// フェッチすればよく通信量も抑えられる、という2つの狙いがある。
+// 新しいサブジャンルを追加するときは、対応するcategoryのgenresに
+// 1行足すだけでよい(index.html側のカテゴリ追加とセットで行うこと)。
+const RANKING_CATEGORIES = [
+  {
+    category: "typing",
+    label: "タイピング",
+    genres: [
+      { genre: "difficulty", difficulty: "easy", label: "易しい" },
+      { genre: "difficulty", difficulty: "normal", label: "ふつう" },
+      { genre: "difficulty", difficulty: "hard", label: "難しい" },
+    ],
+  },
+  {
+    category: "business",
+    label: "ビジネス系",
+    genres: [
+      { genre: "business", difficulty: "", label: "ビジネス用語" },
+      { genre: "email", difficulty: "", label: "メール" },
+      { genre: "kentei", difficulty: "", label: "検定(速度)" },
+    ],
+  },
+  {
+    category: "it",
+    label: "IT系",
+    genres: [
+      { genre: "it", difficulty: "", label: "IT用語" },
+      { genre: "dev", difficulty: "", label: "実務会話" },
+    ],
+  },
+  {
+    category: "programming",
+    label: "プログラミング",
+    genres: [
+      { genre: "js", difficulty: "", label: "JS" },
+      { genre: "sql", difficulty: "", label: "SQL" },
+      { genre: "vba", difficulty: "", label: "VBA(有料)" },
+    ],
+  },
 ];
 
 async function fetchGenreBestRanking(genre, difficulty, limit = 5) {
@@ -179,21 +212,28 @@ function escapeHtmlForRanking(str) {
     .replace(/>/g, "&gt;");
 }
 
-// renderGenreRankingOverview()は1ラウンド終わるたびに呼ばれるが、
-// 呼び出しごとにfetchGenreBestRanking()が非同期で9件走るため、
-// 前回(古い)呼び出しの取得が後から届くと新しいデータを上書きしてしまうことがある。
+// カード描画は1ラウンド終わるたびに呼ばれるが、呼び出しごとに
+// fetchGenreBestRanking()が非同期で複数走るため、前回(古い)呼び出しの
+// 取得が後から届くと新しいデータを上書きしてしまうことがある。
 // そこで呼び出しごとに世代トークンを発行し、自分が最新の呼び出しでなければ
 // 描画をせずに結果を捨てる。
-let genreRankingRenderToken = 0;
+let rankingCardsRenderToken = 0;
 
-async function renderGenreRankingOverview() {
+// 現在タブで選択中のカテゴリ。ページ内で1つだけ持つ単純な状態でよい。
+let activeRankingCategory = RANKING_CATEGORIES[0].category;
+
+// 選択中カテゴリぶんのサブジャンルだけをカードとして描画する。
+// (全カテゴリぶんを一度にフェッチしないので、サブジャンルが増えても
+//  タブを開くまでは通信が発生しない)
+async function renderRankingCards() {
   const grid = document.getElementById("genre-ranking-grid");
   if (!grid || !rankingClient) return;
 
-  const myRenderToken = ++genreRankingRenderToken;
+  const defs = RANKING_CATEGORIES.find(c => c.category === activeRankingCategory)?.genres || [];
+  const myToken = ++rankingCardsRenderToken;
 
   // 先にカードの枠だけ全部出して、データはジャンルごとに届いた順に埋めていく
-  grid.innerHTML = GENRE_RANKING_DEFS.map(
+  grid.innerHTML = defs.map(
     (def, i) => `
       <div class="genre-ranking-card" id="genre-ranking-card-${i}">
         <h3>${escapeHtmlForRanking(def.label)}</h3>
@@ -201,29 +241,63 @@ async function renderGenreRankingOverview() {
       </div>`
   ).join("");
 
-  GENRE_RANKING_DEFS.forEach(async (def, i) => {
+  defs.forEach(async (def, i) => {
     const rows = await fetchGenreBestRanking(def.genre, def.difficulty);
 
-    // 自分が発行された後にさらに新しい呼び出しが始まっていたら、
-    // 古い結果なので画面には反映せず捨てる。
-    if (myRenderToken !== genreRankingRenderToken) return;
+    // 自分が発行された後にさらに新しい呼び出し(ラウンド終了 or タブ切替)が
+    // 始まっていたら、古い結果なので画面には反映せず捨てる。
+    if (myToken !== rankingCardsRenderToken) return;
 
     const card = document.getElementById(`genre-ranking-card-${i}`);
     if (!card) return;
     const list = card.querySelector("ol");
 
     if (rows.length === 0) {
-      list.innerHTML = `<li class="is-empty">まだ記録がありません</li>`;
+      list.innerHTML = `<li class="is-empty">まだ記録がありません(1位を狙えます)</li>`;
       return;
     }
 
     list.innerHTML = rows
-      .map(
-        (row, rank) =>
-          `<li><span>${rank + 1}位 ${escapeHtmlForRanking(row.name)}</span><span>${Number(row.speed).toFixed(1)} 打/秒</span></li>`
-      )
+      .map((row, i2) => {
+        const place = i2 + 1;
+        const medalClass = place <= 3 ? ` is-medal is-medal-${place}` : "";
+        return `
+          <li class="genre-ranking-row${medalClass}">
+            <span class="genre-ranking-place">${place}</span>
+            <span class="genre-ranking-name">${escapeHtmlForRanking(row.name)}</span>
+            <span class="genre-ranking-speed">${Number(row.speed).toFixed(1)}<small>打/秒</small></span>
+          </li>`;
+      })
       .join("");
   });
+}
+
+// カテゴリタブ(初回のみ生成)とカードグリッドをまとめて用意する。
+// 2回目以降(ラウンド終了ごと)の呼び出しではタブは作り直さず、
+// 選択中カテゴリのカードだけ再描画する。
+function renderGenreRankingOverview() {
+  const tabBar = document.getElementById("genre-ranking-tabs");
+  const grid = document.getElementById("genre-ranking-grid");
+  if (!tabBar || !grid || !rankingClient) return;
+
+  if (!tabBar.dataset.built) {
+    tabBar.innerHTML = RANKING_CATEGORIES.map(
+      cat => `<button type="button" class="ranking-tab-btn${cat.category === activeRankingCategory ? " active" : ""}" data-ranking-category="${cat.category}">${escapeHtmlForRanking(cat.label)}</button>`
+    ).join("");
+    tabBar.dataset.built = "1";
+
+    tabBar.querySelectorAll(".ranking-tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        if (btn.classList.contains("active")) return;
+        activeRankingCategory = btn.dataset.rankingCategory;
+        tabBar.querySelectorAll(".ranking-tab-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        renderRankingCards();
+      });
+    });
+  }
+
+  renderRankingCards();
 }
 
 document.addEventListener("DOMContentLoaded", renderGenreRankingOverview);
