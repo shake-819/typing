@@ -240,7 +240,7 @@ body.kentei-active .app {
    カード本体と同じ紙色に、非選択はひとつ奥まった色にする。 */
 .category-bar {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
   gap: 6px;
   margin: -1rem -1.1rem 14px;
   padding: 0 10px;
@@ -310,6 +310,38 @@ body.kentei-active .app {
 
 @media (max-width: 480px) {
   .category-bar { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ロック中(未アンロックの有料パック)のカテゴリ/サブジャンルボタン */
+.category-btn.is-locked,
+.genre-btn.is-locked {
+  color: var(--ink-faint);
+  background: var(--desk);
+  cursor: pointer;
+}
+
+.category-btn.is-locked:hover,
+.genre-btn.is-locked:hover {
+  border-color: var(--stamp);
+  color: var(--stamp);
+  background: var(--stamp-bg);
+}
+
+.lock-badge {
+  display: inline-block;
+  margin-top: 2px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--stamp);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.genre-btn.is-locked .lock-badge {
+  margin-top: 0;
+  margin-left: 6px;
 }
 
 /* 「はじめる」ボタン: 大きめのキーキャップ(スペースキー)のイメージ */
