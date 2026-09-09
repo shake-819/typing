@@ -95,11 +95,15 @@ async function getLinkedRankingName() {
 
 // genre="difficulty"(通常のひらがな/ローマ字打ち)のときだけdifficultyの区別が意味を持つ。
 // それ以外のジャンルは全員共通の問題セットなのでdifficultyは空文字にしておく(DB側もNOT NULL・空文字運用)。
+//
+// durationはランキングの区別に使わない方針にしたため、送信時は常に0固定にする。
+// (submit_typing_score のシグネチャ・一意制約(name, genre, difficulty, duration)は
+//  そのまま残っているが、duration列には常に0だけが入るようになるので、
+//  実質「ジャンル・難易度ごとに1人1記録」として扱われる)
 function buildRankingMode(state) {
   const genre = state.genre;
   const difficulty = genre === "difficulty" ? state.difficulty : "";
-  const duration = state.duration === Infinity ? 0 : Math.round(state.duration);
-  return { genre, difficulty, duration };
+  return { genre, difficulty, duration: 0 };
 }
 
 // submit_typing_score(SQL側の関数)を呼ぶだけ。
@@ -123,30 +127,10 @@ async function saveScoreToRanking({ name, genre, difficulty, duration, speed, ac
   }
 }
 
-// 1人1モース1行しかないので、そのまま速度順にlimit件取得すればランキングになる。
-async function fetchRanking({ genre, difficulty, duration, limit = 5 }) {
-  if (!rankingClient) return [];
-  try {
-    const { data, error } = await rankingClient
-      .from("typing_rankings")
-      .select("name, speed, accuracy, miss, created_at")
-      .eq("genre", genre)
-      .eq("difficulty", difficulty)
-      .eq("duration", duration)
-      .order("speed", { ascending: false })
-      .limit(limit);
-
-    if (error) throw error;
-    return data || [];
-  } catch (err) {
-    console.error("ランキング取得に失敗しました", err);
-    return [];
-  }
-}
-
-// --- ページ最下部の「ジャンル別ランキング」セクション ---
-// こちらは制限時間(duration)を区別せず、そのジャンル(・難易度)の中で
-// 一番速い自己ベストだけを人ごとに集めて上位を出す。
+// ラウンド終了後の即時ランキング表示・下部の「ジャンル別ランキング」表示、
+// どちらもこの関数を使う。durationでは絞らず、名前ごとの最高speedだけを
+// クライアント側で抜き出す(同じ人が複数の制限時間で打っていても、
+// 一番速い記録だけを採用する)。
 const GENRE_RANKING_DEFS = [
   { genre: "difficulty", difficulty: "easy", label: "基本タイピング(易しい)" },
   { genre: "difficulty", difficulty: "normal", label: "基本タイピング(ふつう)" },
@@ -160,8 +144,6 @@ const GENRE_RANKING_DEFS = [
   { genre: "vba", difficulty: "", label: "VBA(有料)" },
 ];
 
-// durationで絞らず全件から、名前ごとの最高speedだけをクライアント側で抜き出す
-// (同じ人が複数の制限時間で打っていても、一番速い記録だけを採用する)
 async function fetchGenreBestRanking(genre, difficulty, limit = 5) {
   if (!rankingClient) return [];
   try {
