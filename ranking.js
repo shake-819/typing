@@ -175,6 +175,13 @@ const RANKING_CATEGORIES = [
       { genre: "vba", difficulty: "", label: "VBA(有料)" },
     ],
   },
+  {
+    category: "lyrics",
+    label: "歌詞（有料）",
+    genres: [
+      { genre: "lyrics", difficulty: "", label: "歌詞" },
+    ],
+  },
 ];
 
 async function fetchGenreBestRanking(genre, difficulty, limit = 5) {
