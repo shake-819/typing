@@ -286,7 +286,7 @@ function nextItem() {
     els.imeInput.classList.remove("ime-wrong");
     els.imeInput.focus();
   } else {
-    state.engine = new TypingEngine(item.kana, { caseSensitive: state.genre === "js" || state.genre === "sql" });
+    state.engine = new TypingEngine(item.kana, { caseSensitive: state.genre === "js" || state.genre === "sql" || state.genre === "vba" });
     buildRomajiLine();
   }
 }
@@ -295,6 +295,7 @@ function startRound() {
   state.pool = state.genre === "business" ? BUSINESS_SENTENCES
     : state.genre === "js" ? JS_SENTENCES
     : state.genre === "sql" ? SQL_SENTENCES
+    : state.genre === "vba" ? VBA_SENTENCES
     : state.genre === "it" ? IT_SENTENCES
     : state.genre === "email" ? EMAIL_SENTENCES
     : state.genre === "dev" ? DEV_SENTENCES
