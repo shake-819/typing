@@ -51,6 +51,32 @@ async function fetchProfileName(userId) {
   return null;
 }
 
+// public.users からそのユーザーの保有ポイント(score列)を取得する。
+// ログインしていない・取得できない場合は null。
+async function fetchMyScore() {
+  if (!rankingClient) return null;
+  try {
+    const { data: userData } = await rankingClient.auth.getUser();
+    const user = userData?.user;
+    if (!user) return null;
+
+    const { data, error } = await rankingClient
+      .from("users")
+      .select("score")
+      .eq("id", user.id)
+      .single();
+
+    if (error) {
+      console.error("ポイントの取得に失敗しました", error);
+      return null;
+    }
+    return data?.score ?? null;
+  } catch (err) {
+    console.error("ポイントの取得に失敗しました", err);
+    return null;
+  }
+}
+
 // ログイン中なら、ランキングに使う名前として public.users.name を毎回取り直す。
 // (localStorageの古い名前より、そのときのプロフィール名を優先する)
 // ログインしていない・名前が取れない場合は null(呼び出し側で手入力にフォールバック)。
