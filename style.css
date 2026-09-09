@@ -38,6 +38,14 @@
   --miss: #b23a2c;
   --miss-bg: #f8e6e1;
 
+  /* ジャンル別ランキングの1〜3位を示すメダル色(検定の合格印から着想) */
+  --medal-1: #b8860b;
+  --medal-1-bg: #faf1d8;
+  --medal-2: #7a7f88;
+  --medal-2-bg: #eef0f2;
+  --medal-3: #a15c33;
+  --medal-3-bg: #f5e6da;
+
   --r-paper: 3px;
   --r-key: 7px;
   --r-tab: 9px 9px 0 0;
@@ -822,9 +830,43 @@ body.kentei-active .app {
   margin-bottom: 12px;
 }
 
+/* カテゴリ切替タブ: 出題内容選択のタブと呼応させつつ、
+   ランキングは補足情報なので一段小さく・横スクロール可能にしておく */
+.ranking-tab-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.ranking-tab-btn {
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--rule-strong);
+  background: var(--desk);
+  color: var(--ink-soft);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease, background-color 0.12s ease;
+}
+
+.ranking-tab-btn:hover {
+  border-color: var(--indigo);
+  color: var(--indigo-deep);
+  background: var(--indigo-bg);
+}
+
+.ranking-tab-btn.active {
+  background: var(--indigo);
+  border-color: var(--indigo-deep);
+  color: #fff;
+}
+
 .genre-ranking-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
   gap: 12px;
 }
 
@@ -832,14 +874,16 @@ body.kentei-active .app {
   background: var(--paper);
   border: 1px solid var(--rule);
   border-radius: var(--r-paper);
-  padding: 12px 14px;
+  padding: 14px 16px;
 }
 
 .genre-ranking-card h3 {
   font-size: 13px;
   font-weight: 700;
   color: var(--ink-soft);
-  margin: 0 0 8px;
+  margin: 0 0 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--rule);
 }
 
 .genre-ranking-card ol {
@@ -848,20 +892,74 @@ body.kentei-active .app {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 
-.genre-ranking-card li {
-  display: flex;
-  justify-content: space-between;
+.genre-ranking-row {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 2px;
+  border-radius: 6px;
+}
+
+.genre-ranking-place {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--paper-soft);
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.genre-ranking-name {
   font-size: 13px;
   color: var(--ink);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
+.genre-ranking-speed {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.genre-ranking-speed small {
+  margin-left: 2px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--ink-faint);
+  font-family: var(--font-sans);
+}
+
+/* 1〜3位はメダル色の帯+バッジで一目で目立たせる */
+.genre-ranking-row.is-medal-1 { background: var(--medal-1-bg); }
+.genre-ranking-row.is-medal-2 { background: var(--medal-2-bg); }
+.genre-ranking-row.is-medal-3 { background: var(--medal-3-bg); }
+
+.genre-ranking-row.is-medal-1 .genre-ranking-place { background: var(--medal-1); color: #fff; }
+.genre-ranking-row.is-medal-2 .genre-ranking-place { background: var(--medal-2); color: #fff; }
+.genre-ranking-row.is-medal-3 .genre-ranking-place { background: var(--medal-3); color: #fff; }
+
+.genre-ranking-row.is-medal-1 .genre-ranking-name,
+.genre-ranking-row.is-medal-1 .genre-ranking-speed { color: var(--medal-1); }
 
 .genre-ranking-card li.is-empty {
   color: var(--ink-faint);
   font-family: var(--font-sans);
+  font-size: 13px;
+  padding: 4px 2px;
 }
 
 .primary-btn {
