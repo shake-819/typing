@@ -454,7 +454,9 @@ body.kentei-active .app {
     gap: 14px;
     align-items: start;
   }
-  .start-btn, .weak-key-panel {
+  /* 出題内容(カテゴリ+サブジャンル)はタブが多く幅を圧迫されると不安定になるため、
+     画面幅にかかわらず常に横いっぱいの1列で固定する。 */
+  #content-setting-block, .start-btn, .weak-key-panel {
     grid-column: 1 / -1;
   }
 }
