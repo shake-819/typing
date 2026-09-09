@@ -65,6 +65,14 @@
             </svg>
             <span>プログラミング</span>
           </button>
+          <button class="category-btn" data-category="lyrics">
+            <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 18V5l12-2v13"/>
+              <circle cx="6" cy="18" r="3"/>
+              <circle cx="18" cy="16" r="3"/>
+            </svg>
+            <span>歌詞</span>
+          </button>
         </div>
 
         <div class="difficulty-bar subgenre-bar" data-category-group="typing">
@@ -90,6 +98,17 @@
           <button class="genre-btn active" data-genre="js">JS</button>
           <button class="genre-btn" data-genre="sql">SQL</button>
           <button class="genre-btn is-locked" data-genre="vba" data-locked-pack="vba">VBA（有料）</button>
+        </div>
+        <div class="difficulty-bar subgenre-bar" data-category-group="lyrics" style="display:none;">
+          <!-- 歌詞ジャンルは中身(曲)をすべて有料コンテンツにする方針。
+               サブジャンルを増やす場合も、既存のものを含めて全ボタンに
+               is-locked + data-locked-pack を付けること(無料の歌詞ボタンは作らない)。 -->
+          <button class="genre-btn active is-locked" data-genre="lyrics" data-locked-pack="lyrics">歌詞（有料）</button>
+          <!-- 実際の値段(70pt)や購入判定はDB(sentence_packs.key="lyrics", cost=70)側の値で決まる。
+               サブジャンルを分けたくなったら(例: J-POP/アニソン等)、
+               この中に data-genre を変えたボタンを追加してOK。
+               その場合は lyrics-sentences.js 側の配列名・app.jsのpool分岐・
+               ranking.jsのRANKING_CATEGORIESにも1行ずつ追加すること。 -->
         </div>
       </div>
 
@@ -142,6 +161,9 @@
 
       <main class="practice-card">
         <p class="progress-label" id="progress-label">1問目</p>
+
+        <!-- 歌詞ジャンルのときだけ「曲名 / アーティスト（作詞・作曲）」を表示する。他ジャンルでは常にhidden。 -->
+        <p class="lyrics-credit" id="lyrics-credit" hidden></p>
 
         <p class="display-line" id="display-line"></p>
         <div class="romaji-line" id="romaji-line"></div>
@@ -220,6 +242,7 @@
   <script src="itpass-sentences.js"></script>
   <script src="email-sentences.js"></script>
   <script src="dev-sentences.js"></script>
+  <script src="lyrics-sentences.js"></script>
   <script src="typing-engine.js"></script>
   <script src="keyboard.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
