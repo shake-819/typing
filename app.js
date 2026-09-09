@@ -3,8 +3,8 @@ const DURATION_OPTIONS = [30, 60, 90, 120];
 const DEFAULT_DURATION = 30;
 
 const state = {
-  category: "typing", // "typing" / "business" / "it" / "programming"
-  genre: "difficulty", // "difficulty": 難易度別セット / "business": よく使うビジネス用語50 / "js": JS構文あるある50 / "sql": SQL構文あるある50
+  category: "typing", // "typing" / "business" / "it" / "programming" / "lyrics"
+  genre: "difficulty", // "difficulty": 難易度別セット / "business": よく使うビジネス用語50 / "js": JS構文あるある50 / "sql": SQL構文あるある50 / "lyrics": 歌詞
   difficulty: "easy",
   duration: DEFAULT_DURATION,
   conversionMode: "off", // "off": 変換なし(ローマ字を直接判定) / "on": 変換あり(実際のIMEで<input>に入力)
@@ -38,6 +38,7 @@ const els = {
   imeInput: document.getElementById("ime-input"),
   modeSettingBlock: document.getElementById("mode-setting-block"),
   progressLabel: document.getElementById("progress-label"),
+  lyricsCredit: document.getElementById("lyrics-credit"),
   speedOut: document.getElementById("speed-out"),
   timeOut: document.getElementById("time-out"),
   missOut: document.getElementById("miss-out"),
@@ -88,6 +89,12 @@ function shuffle(arr) {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
+}
+
+// 歌詞ジャンルだけはシャッフルせず、記入順(上から下)に出題する。
+// 他のジャンルは従来通りランダム出題。
+function buildQueue(pool) {
+  return state.genre === "lyrics" ? [...pool] : shuffle(pool);
 }
 
 function isUnlimitedMode() {
@@ -239,9 +246,14 @@ function stopTicking() {
   cancelAnimationFrame(state.rafId);
 }
 
+function buildQueue() {
+  // 歌詞ジャンルだけはシャッフルせず、歌詞の上から順番に出題する。
+  return state.genre === "lyrics" ? [...state.pool] : shuffle(state.pool);
+}
+
 function refillQueueIfNeeded() {
   if (state.queue.length === 0) {
-    state.queue = shuffle(state.pool);
+    state.queue = buildQueue();
   }
 }
 
@@ -254,6 +266,17 @@ function nextItem() {
 
   els.displayLine.textContent = item.display;
   applyLongTextLayout(item);
+
+  // 歌詞ジャンルのときだけ、その行がどの曲のものかを上部に表示する。
+  if (state.genre === "lyrics" && item.songTitle) {
+    const credit = `『${item.songTitle}』${item.artist ? " / " + item.artist : ""}` +
+      (item.lyricist || item.composer ? `（作詞:${item.lyricist || "-"} 作曲:${item.composer || "-"}）` : "");
+    els.lyricsCredit.textContent = credit;
+    els.lyricsCredit.hidden = false;
+  } else {
+    els.lyricsCredit.hidden = true;
+    els.lyricsCredit.textContent = "";
+  }
 
   if (state.conversionMode === "on") {
     els.imeInput.value = "";
@@ -274,6 +297,7 @@ function startRound() {
     : state.genre === "itpass" ? ITPASS_SENTENCES
     : state.genre === "email" ? EMAIL_SENTENCES
     : state.genre === "dev" ? DEV_SENTENCES
+    : state.genre === "lyrics" ? LYRICS_SENTENCES
     : SENTENCE_SETS[state.difficulty];
 
   // 「！？を除く」設定の場合、感嘆符・疑問符を含む問題をプールから取り除く。
@@ -283,7 +307,7 @@ function startRound() {
     if (filtered.length > 0) state.pool = filtered;
   }
 
-  state.queue = shuffle(state.pool);
+  state.queue = buildQueue();
   state.startTime = null;
   state.roundOver = false;
   stopTicking();
@@ -323,6 +347,8 @@ function finishRound() {
   const speed = elapsed > 0 ? (state.roundStats.correct / elapsed).toFixed(1) : "0.0";
   els.romajiLine.innerHTML = "";
   els.displayLine.textContent = "";
+  els.lyricsCredit.hidden = true;
+  els.lyricsCredit.textContent = "";
   els.imeInput.value = "";
   els.imeInput.blur();
   els.progressLabel.textContent = "完了";
