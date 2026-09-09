@@ -155,7 +155,6 @@ const RANKING_CATEGORIES = [
     genres: [
       { genre: "business", difficulty: "", label: "ビジネス用語" },
       { genre: "email", difficulty: "", label: "メール" },
-      { genre: "kentei", difficulty: "", label: "検定(速度)" },
     ],
   },
   {
