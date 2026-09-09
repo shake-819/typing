@@ -196,9 +196,18 @@ function escapeHtmlForRanking(str) {
     .replace(/>/g, "&gt;");
 }
 
+// renderGenreRankingOverview()は1ラウンド終わるたびに呼ばれるが、
+// 呼び出しごとにfetchGenreBestRanking()が非同期で9件走るため、
+// 前回(古い)呼び出しの取得が後から届くと新しいデータを上書きしてしまうことがある。
+// そこで呼び出しごとに世代トークンを発行し、自分が最新の呼び出しでなければ
+// 描画をせずに結果を捨てる。
+let genreRankingRenderToken = 0;
+
 async function renderGenreRankingOverview() {
   const grid = document.getElementById("genre-ranking-grid");
   if (!grid || !rankingClient) return;
+
+  const myRenderToken = ++genreRankingRenderToken;
 
   // 先にカードの枠だけ全部出して、データはジャンルごとに届いた順に埋めていく
   grid.innerHTML = GENRE_RANKING_DEFS.map(
@@ -211,6 +220,11 @@ async function renderGenreRankingOverview() {
 
   GENRE_RANKING_DEFS.forEach(async (def, i) => {
     const rows = await fetchGenreBestRanking(def.genre, def.difficulty);
+
+    // 自分が発行された後にさらに新しい呼び出しが始まっていたら、
+    // 古い結果なので画面には反映せず捨てる。
+    if (myRenderToken !== genreRankingRenderToken) return;
+
     const card = document.getElementById(`genre-ranking-card-${i}`);
     if (!card) return;
     const list = card.querySelector("ol");
