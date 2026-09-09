@@ -108,10 +108,6 @@ summary:focus-visible {
   padding: 2.25rem 1.25rem 3rem;
 }
 
-body.kentei-active .app {
-  max-width: 1040px;
-}
-
 /* ---------------------------- ヘッダー ---------------------------- */
 
 .app-header {
@@ -565,8 +561,7 @@ body.kentei-active .app {
   box-shadow: 0 0 0 3px var(--indigo-bg);
 }
 
-.ime-input.ime-wrong,
-.kentei-input.ime-wrong {
+.ime-input.ime-wrong {
   border-color: var(--miss);
   box-shadow: 0 0 0 3px var(--miss-bg);
   animation: ime-shake 0.15s ease-in-out 0s 2;
@@ -585,142 +580,6 @@ body.kentei-active .app {
   padding: 12px 14px;
   background: var(--paper-soft);
   border-radius: var(--r-paper);
-}
-
-/* ---------------------------- 検定(速度)モード ---------------------------- */
-
-.kentei-columns {
-  display: flex;
-  gap: 14px;
-  margin-bottom: 1rem;
-  align-items: stretch;
-}
-
-.kentei-problem-pane,
-.kentei-word-pane {
-  flex: 0 0 auto;
-  box-sizing: content-box;
-  width: calc(30em + 32px);
-  max-width: 100%;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  background: var(--paper);
-  border: 1px solid var(--rule-strong);
-  border-radius: var(--r-paper);
-  overflow: hidden;
-}
-
-.kentei-pane-label {
-  margin: 0;
-  padding: 8px 14px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--ink-soft);
-  background: var(--paper-soft);
-  border-bottom: 1px solid var(--rule);
-}
-
-.kentei-problem-pane,
-.kentei-word-pane {
-  --kentei-line-height: 28px;
-}
-
-.kentei-problem-text {
-  margin: 0;
-  flex: 1;
-  min-height: 220px;
-  padding: 14px 16px;
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-family: var(--font-sans);
-  font-size: 15px;
-  line-height: var(--kentei-line-height);
-  color: var(--ink);
-  background-image: linear-gradient(to bottom, var(--rule) 1px, transparent 1px);
-  background-size: 100% var(--kentei-line-height);
-  background-position: 0 calc(14px + var(--kentei-line-height) - 1px);
-  background-repeat: repeat-y;
-}
-
-.kentei-word-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 9px 14px;
-  background: var(--paper-soft);
-  border-bottom: 1px solid var(--rule);
-}
-
-.kentei-word-toolbar span {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--rule-strong);
-}
-
-.kentei-word-toolbar span:nth-child(1) { background: var(--miss); }
-.kentei-word-toolbar span:nth-child(2) { background: #c98a2c; }
-.kentei-word-toolbar span:nth-child(3) { background: var(--ok); }
-
-.kentei-input {
-  flex: 1;
-  width: 100%;
-  min-height: 220px;
-  resize: none;
-  box-sizing: border-box;
-  border: none;
-  padding: 14px 16px;
-  background-color: #fff;
-  color: var(--ink);
-  font-family: var(--font-sans);
-  font-size: 15px;
-  line-height: var(--kentei-line-height);
-  background-image: linear-gradient(to bottom, var(--rule) 1px, transparent 1px);
-  background-size: 100% var(--kentei-line-height);
-  background-position: 0 calc(14px + var(--kentei-line-height) - 1px);
-  background-repeat: repeat-y;
-}
-
-.kentei-input:focus {
-  outline: none;
-  box-shadow: inset 0 0 0 2px var(--indigo-bg);
-}
-
-.kentei-result-text {
-  white-space: pre-wrap;
-  word-break: break-word;
-  overflow-y: auto;
-}
-
-.kentei-char-wrong {
-  color: var(--miss);
-  background: rgba(178, 58, 44, 0.12);
-  border-radius: 2px;
-}
-
-.kentei-char-missing {
-  color: var(--miss);
-  text-decoration: underline dashed;
-  text-decoration-thickness: 1.5px;
-}
-
-.kentei-char-extra {
-  color: var(--miss);
-  background: rgba(178, 58, 44, 0.12);
-  text-decoration: line-through;
-}
-
-.kentei-word-footer {
-  display: flex;
-  justify-content: flex-end;
-  padding: 10px 14px;
-  border-top: 1px solid var(--rule);
-  background: var(--paper-soft);
-}
-
-@media (max-width: 640px) {
-  .kentei-columns { flex-direction: column; }
 }
 
 .focus-hint {
