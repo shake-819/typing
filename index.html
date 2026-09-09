@@ -65,6 +65,17 @@
             </svg>
             <span>プログラミング</span>
           </button>
+          <!-- 動作確認用のサンプル。実際のセンテンスができたら、
+               data-category を新しいカテゴリ名にして本物のsentencesファイルに差し替え、
+               data-locked-pack を sentence_packs.key と合わせてください。
+               不要ならこのボタンごと削除してOKです。 -->
+          <button class="category-btn is-locked" data-category="sample" data-locked-pack="sample">
+            <svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="11" width="14" height="9" rx="1.5"/>
+              <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+            </svg>
+            <span>サンプル(有料)</span>
+          </button>
         </div>
 
         <div class="difficulty-bar subgenre-bar" data-category-group="typing">
@@ -247,6 +258,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="ranking.js"></script>
   <script src="auth.js"></script>
+  <script src="unlocks.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
