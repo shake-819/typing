@@ -663,11 +663,22 @@ els.categoryButtons.forEach(btn => {
     });
 
     const activeGroup = document.querySelector(`.subgenre-bar[data-category-group="${category}"]`);
-    const activeSubBtn = activeGroup.querySelector(".genre-btn.active") || activeGroup.querySelector(".genre-btn");
+    const subBtns = Array.from(activeGroup.querySelectorAll(".genre-btn"));
+    // ロック中(未アンロックの有料サブジャンル)は自動選択の対象から外す。
+    // 「activeクラス付き・未ロック」→「先頭の未ロック」→(全部ロック中なら仕方なく)先頭、の優先順で選ぶ。
+    const activeSubBtn =
+      subBtns.find(b => b.classList.contains("active") && !b.classList.contains("is-locked")) ||
+      subBtns.find(b => !b.classList.contains("is-locked")) ||
+      subBtns[0];
     if (activeSubBtn) {
+      subBtns.forEach(b => b.classList.remove("active"));
       activeSubBtn.classList.add("active");
-      state.genre = activeSubBtn.dataset.genre;
-      if (activeSubBtn.dataset.difficulty) state.difficulty = activeSubBtn.dataset.difficulty;
+      // ロック中のボタンは見た目だけ選択状態にし、実際の出題内容(state.genre)は変えない。
+      // (unlocks.js側のクリックハンドラが購入フローを担当する)
+      if (!activeSubBtn.classList.contains("is-locked")) {
+        state.genre = activeSubBtn.dataset.genre;
+        if (activeSubBtn.dataset.difficulty) state.difficulty = activeSubBtn.dataset.difficulty;
+      }
     }
     syncKenteiUi();
   });
