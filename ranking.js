@@ -157,6 +157,7 @@ const GENRE_RANKING_DEFS = [
   { genre: "dev", difficulty: "", label: "実務会話" },
   { genre: "js", difficulty: "", label: "JS" },
   { genre: "sql", difficulty: "", label: "SQL" },
+  { genre: "vba", difficulty: "", label: "VBA(有料)" },
 ];
 
 // durationで絞らず全件から、名前ごとの最高speedだけをクライアント側で抜き出す
