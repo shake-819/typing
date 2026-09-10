@@ -1,6 +1,22 @@
 // 「歌詞」ジャンルのお題データ。
 //
-// 曲ごとに LYRICS_SONGS へ1つオブジェクトを追加する。
+// 曲を追加する手順(3箇所を触ります):
+//   1. このファイル: LYRICS_SONGS に曲オブジェクトを1つ追加する。
+//      genre は他の曲と重複しない一意な値にし、必ず "lyrics" で始める
+//      (例: "lyrics-newsong")。曲ごとに個別課金する方針のため、
+//      このgenreがそのままDB(sentence_packs.key)・購入ボタンのkeyになる。
+//      ※最初の曲だけ genre が "lyrics"(ハイフンなし)なのは、
+//        既にこのkeyで購入済みのユーザーがいるため変更しないこと。
+//   2. index.html: 歌詞のsubgenre-bar内にボタンを1つ追加する。
+//      data-genre と data-locked-pack は、1.で決めたgenreと同じ値にする。
+//   3. Supabase: public.sentence_packs に (key, label, cost) を1行追加する。
+//      keyは1./2.と同じ値にする。
+//
+// ranking.jsのジャンル別ランキングカードはLYRICS_SONGSから自動生成されるので、
+// ranking.js側の編集は不要。
+//
+// 各曲のフィールド:
+//   genre:    このジャンルのID(上記の通り一意にする)
 //   title:    曲名
 //   artist:   アーティスト名
 //   lyricist: 作詞者
@@ -8,10 +24,9 @@
 //   lines:    歌詞を1行(またはフレーズ)ずつに分けた配列。
 //             display: 画面に表示する文章(漢字混じり)
 //             kana:    入力判定に使うひらがな読み
-//
-// 記入例(コピーして使う場合はコメントを外して書き換えてください):
 const LYRICS_SONGS = [
   {
+    genre: "lyrics",
     title: "盛れ！ミ・アモーレ",
     artist: "Juice=Juice",
     lyricist: "山崎あおい",
@@ -91,6 +106,7 @@ const LYRICS_SONGS = [
     ]
   },
   {
+    genre: "lyrics-yorunoodoriko",
     title: "夜の踊り子",
     artist: "サカナクション",
     lyricist: "Ichiro Yamaguchi",
@@ -147,16 +163,18 @@ const LYRICS_SONGS = [
   },
 ];
 
-// 出題プール本体。曲ごとの行を1つの配列に展開し、
-// どの曲の行かが分かるよう曲名・アーティスト・作詞・作曲の情報も各行に持たせておく
+// ジャンルID(曲)ごとの出題プール。
+// 曲名・アーティスト・作詞・作曲の情報も各行に持たせておく
 // (app.js側で歌詞ジャンルのときだけこの情報を画面上部に表示する)。
-const LYRICS_SENTENCES = LYRICS_SONGS.flatMap(song =>
-  song.lines.map(line => ({
+// LYRICS_SONGSに曲を追加すると、ここは自動的に増える。
+const LYRICS_SENTENCES_BY_GENRE = {};
+LYRICS_SONGS.forEach(song => {
+  LYRICS_SENTENCES_BY_GENRE[song.genre] = song.lines.map(line => ({
     display: line.display,
     kana: line.kana,
     songTitle: song.title,
     artist: song.artist,
     lyricist: song.lyricist,
     composer: song.composer
-  }))
-);
+  }));
+});
