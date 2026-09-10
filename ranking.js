@@ -175,9 +175,13 @@ const RANKING_CATEGORIES = [
   {
     category: "lyrics",
     label: "歌詞（有料）",
-    genres: [
-      { genre: "lyrics", difficulty: "", label: "歌詞" },
-    ],
+    // LYRICS_SONGS(lyrics-sentences.js)から曲ごとに自動生成。
+    // 曲を追加してもここは編集不要。
+    genres: (typeof LYRICS_SONGS !== "undefined" ? LYRICS_SONGS : []).map(song => ({
+      genre: song.genre,
+      difficulty: "",
+      label: song.title,
+    })),
   },
 ];
 
