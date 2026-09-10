@@ -162,6 +162,7 @@ const LYRICS_SONGS = [
     ]
   },
   {
+    genre: "lyrics-sukisugitemetu",
     title: "好きすぎて滅！",
     artist: "M!LK",
     lyricist: "MUTEKI DEAD SNAKE",
