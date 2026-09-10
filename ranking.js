@@ -1,6 +1,7 @@
 // --- ランキング機能(Supabase連携) ---
-// テーブル: public.typing_rankings (name, category, genre, difficulty, duration, speed, accuracy, miss, created_at)
-// 一意制約: (name, genre, difficulty, duration) で1人1モースあたり1行に固定。
+// テーブル: public.typing_rankings (name, category, genre, difficulty, speed, accuracy, miss, user_id, created_at)
+// 一意制約: user_idがある場合は(user_id, genre, difficulty)、無い場合は(name, genre, difficulty)で
+//           1人1モードあたり1行に固定。
 // 方針: 送信は必ず submit_typing_score という関数(RPC)経由で行う。
 //       関数側で「今の記録より速いときだけ上書き」を判定するので、行が無限に増えない。
 
@@ -95,35 +96,31 @@ async function getLinkedRankingName() {
 
 // genre="difficulty"(通常のひらがな/ローマ字打ち)のときだけdifficultyの区別が意味を持つ。
 // それ以外のジャンルは全員共通の問題セットなのでdifficultyは空文字にしておく(DB側もNOT NULL・空文字運用)。
-//
-// durationはランキングの区別に使わない方針にしたため、送信時は常に0固定にする。
-// (submit_typing_score のシグネチャ・一意制約(name, genre, difficulty, duration)は
-//  そのまま残っているが、duration列には常に0だけが入るようになるので、
-//  実質「ジャンル・難易度ごとに1人1記録」として扱われる)
 function buildRankingMode(state) {
   const genre = state.genre;
   const difficulty = genre === "difficulty" ? state.difficulty : "";
-  return { genre, difficulty, duration: 0 };
+  return { genre, difficulty };
 }
 
 // submit_typing_score(SQL側の関数)を呼ぶだけ。
 // 「今の自己ベストより速いか」の判定はDB側で行うので、ここでは常に呼び出してよい。
-async function saveScoreToRanking({ name, genre, difficulty, duration, speed, accuracy, miss }) {
-  if (!rankingClient) return;
+async function saveScoreToRanking({ name, genre, difficulty, speed, accuracy, miss }) {
+  if (!rankingClient) return { success: false, error: new Error("rankingClient未初期化") };
   try {
     const { error } = await rankingClient.rpc("submit_typing_score", {
       p_name: name,
       p_genre: genre,
       p_difficulty: difficulty,
-      p_duration: duration,
       p_speed: speed,
       p_accuracy: accuracy,
       p_miss: miss,
       p_user_id: await getLinkedUserId(),
     });
     if (error) throw error;
+    return { success: true };
   } catch (err) {
     console.error("ランキング送信に失敗しました", err);
+    return { success: false, error: err };
   }
 }
 
