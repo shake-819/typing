@@ -512,6 +512,18 @@ summary:focus-visible {
   line-height: 1.6;
 }
 
+.display-line ruby {
+  ruby-position: over;
+}
+
+.display-line rt {
+  font-family: var(--font-serif);
+  font-size: 0.45em;
+  font-weight: 500;
+  color: var(--ink-soft);
+  user-select: none;
+}
+
 .romaji-line {
   text-align: center;
   font-family: var(--font-mono);
