@@ -9,6 +9,7 @@ const state = {
   duration: DEFAULT_DURATION,
   conversionMode: "off", // "off": 変換なし(ローマ字を直接判定) / "on": 変換あり(実際のIMEで<input>に入力)
   punctuationMode: "on", // "on": ！？を含む問題も出題する / "off": ！？を含む問題を除外する
+  furiganaMode: "on", // "on": furiganaデータがある問題にふりがなを表示する / "off": 表示しない
   currentItem: null,
   pool: [],
   queue: [],
@@ -33,6 +34,7 @@ const els = {
   durationButtons: document.querySelectorAll(".duration-btn"),
   modeButtons: document.querySelectorAll(".mode-btn"),
   punctuationButtons: document.querySelectorAll(".punctuation-btn"),
+  furiganaButtons: document.querySelectorAll(".furigana-btn"),
   displayLine: document.getElementById("display-line"),
   romajiLine: document.getElementById("romaji-line"),
   imeInput: document.getElementById("ime-input"),
@@ -263,6 +265,31 @@ function refillQueueIfNeeded() {
   }
 }
 
+// HTML特殊文字をエスケープする(rubyタグを差し込むのでinnerHTMLを使う都合上必要)
+function escapeHtml(text) {
+  return text
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+// item.furigana(例: [["会議","かいぎ"], ["資料","しりょう"]])があり、
+// かつふりがな表示がONのときだけ、該当する単語を<ruby>タグに置き換えて表示する。
+// item.display自体(タイピング判定・ランキング等で使う生テキスト)は一切変更しない。
+function renderDisplayLine(item) {
+  if (state.furiganaMode !== "on" || !item.furigana || item.furigana.length === 0) {
+    els.displayLine.textContent = item.display;
+    return;
+  }
+  let html = escapeHtml(item.display);
+  item.furigana.forEach(([word, reading]) => {
+    // 同じ単語が複数回出てくる行にも対応するため、一致箇所すべてを置き換える。
+    // ただし既に<ruby>化した箇所を二重に置き換えないよう、プレーンな単語のみを対象にする。
+    html = html.split(escapeHtml(word)).join(`<ruby>${escapeHtml(word)}<rt>${escapeHtml(reading)}</rt></ruby>`);
+  });
+  els.displayLine.innerHTML = html;
+}
+
 function nextItem() {
   if (state.roundOver) return;
   refillQueueIfNeeded();
@@ -270,7 +297,7 @@ function nextItem() {
   state.currentItem = item;
   els.progressLabel.textContent = `${state.roundStats.itemsDone + 1}問目`;
 
-  els.displayLine.textContent = item.display;
+  renderDisplayLine(item);
   applyLongTextLayout(item);
 
   // 歌詞ジャンルのときだけ、その行がどの曲のものかを上部に表示する。
@@ -610,6 +637,18 @@ els.punctuationButtons.forEach(btn => {
     els.punctuationButtons.forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
     state.punctuationMode = btn.dataset.punctuation;
+  });
+});
+
+els.furiganaButtons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    els.furiganaButtons.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    state.furiganaMode = btn.dataset.furigana;
+    // 練習中に切り替えた場合、今表示中の問題文にもすぐ反映する
+    if (state.currentItem) {
+      renderDisplayLine(state.currentItem);
+    }
   });
 });
 
