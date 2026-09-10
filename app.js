@@ -302,6 +302,7 @@ function startRound() {
     : state.genre === "it" ? IT_SENTENCES
     : state.genre === "itpass" ? ITPASS_SENTENCES
     : state.genre === "email" ? EMAIL_SENTENCES
+    : state.genre === "keigo" ? KEIGO_SENTENCES
     : state.genre === "dev" ? DEV_SENTENCES
     : state.genre.startsWith("lyrics") ? (LYRICS_SENTENCES_BY_GENRE[state.genre] || [])
     : SENTENCE_SETS[state.difficulty];
