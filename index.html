@@ -100,15 +100,13 @@
           <button class="genre-btn is-locked" data-genre="vba" data-locked-pack="vba">VBA（有料）</button>
         </div>
         <div class="difficulty-bar subgenre-bar" data-category-group="lyrics" style="display:none;">
-          <!-- 歌詞ジャンルは中身(曲)をすべて有料コンテンツにする方針。
-               サブジャンルを増やす場合も、既存のものを含めて全ボタンに
-               is-locked + data-locked-pack を付けること(無料の歌詞ボタンは作らない)。 -->
+          <!-- 歌詞は曲ごとに個別課金する方針。曲を増やす場合は、
+               ここに1ボタン追加して data-genre / data-locked-pack を
+               lyrics-sentences.js側のLYRICS_SONGSに追加したgenreと
+               同じ値にする(全ボタンに is-locked + data-locked-pack を付けること)。
+               詳しい手順はlyrics-sentences.jsの先頭コメント参照。 -->
           <button class="genre-btn active is-locked" data-genre="lyrics" data-locked-pack="lyrics">盛れ！ミ・アモーレ（有料）</button>
-          <!-- 実際の値段(70pt)や購入判定はDB(sentence_packs.key="lyrics", cost=70)側の値で決まる。
-               サブジャンルを分けたくなったら(例: J-POP/アニソン等)、
-               この中に data-genre を変えたボタンを追加してOK。
-               その場合は lyrics-sentences.js 側の配列名・app.jsのpool分岐・
-               ranking.jsのRANKING_CATEGORIESにも1行ずつ追加すること。 -->
+          <button class="genre-btn is-locked" data-genre="lyrics-yorunoodoriko" data-locked-pack="lyrics-yorunoodoriko">夜の踊り子（有料）</button>
         </div>
       </div>
 
