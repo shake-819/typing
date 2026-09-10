@@ -91,12 +91,6 @@ function shuffle(arr) {
   return a;
 }
 
-// 歌詞ジャンルだけはシャッフルせず、記入順(上から下)に出題する。
-// 他のジャンルは従来通りランダム出題。
-function buildQueue(pool) {
-  return state.genre === "lyrics" ? [...pool] : shuffle(pool);
-}
-
 function isUnlimitedMode() {
   return state.duration === Infinity;
 }
@@ -143,13 +137,25 @@ function applyLongTextLayout(item) {
 
 // お題が変わったタイミングで1回だけ、モーラごとの入れ物(span)を作る。
 // 完了済み・未着手のモーラは以後書き換えないので、再描画コストがかからない。
+// 実際に押すキーと、画面上のローマ字表示を変えたい文字の対応表。
+// (判定は元のキーのまま行い、見た目だけこの表に差し替える)
+// 例: 中黒「・」は「/」キーで入力するが、画面には「・」と表示する。
+const ROMAJI_DISPLAY_OVERRIDES = { "/": "・" };
+
+function romajiDisplayText(str) {
+  return str
+    .split("")
+    .map(ch => ROMAJI_DISPLAY_OVERRIDES[ch] || ch)
+    .join("");
+}
+
 function buildRomajiLine() {
   const engine = state.engine;
   const fragment = document.createDocumentFragment();
   state.unitEls = engine.units.map(unit => {
     const span = document.createElement("span");
     span.className = "romaji-pending";
-    span.textContent = unit.patterns[0];
+    span.textContent = romajiDisplayText(unit.patterns[0]);
     fragment.appendChild(span);
     return span;
   });
@@ -174,7 +180,7 @@ function updateCurrentUnitSpan() {
       // 「re」「mu」のようなローマ字2文字セット全体ではなく、
       // 次に打つべき1文字だけをハイライトする。
       const cls = i < typedLen ? "romaji-done" : i === typedLen ? "romaji-current" : "romaji-pending";
-      return `<span class="${cls}">${ch}</span>`;
+      return `<span class="${cls}">${romajiDisplayText(ch)}</span>`;
     })
     .join("");
 
@@ -194,7 +200,7 @@ function completeCurrentUnitSpan(completedIdx, typedText) {
   const engine = state.engine;
   const span = state.unitEls[completedIdx];
   span.className = "romaji-done";
-  span.textContent = typedText || engine.units[completedIdx].patterns[0];
+  span.textContent = romajiDisplayText(typedText || engine.units[completedIdx].patterns[0]);
 
   if (!engine.isDone) {
     updateCurrentUnitSpan();
@@ -377,7 +383,10 @@ async function submitRankingResult(scoreInfo) {
 
   if (existingName) {
     els.rankingNameSetup.style.display = "none";
-    await saveScoreToRanking({ name: existingName, ...mode, ...scoreInfo });
+    const result = await saveScoreToRanking({ name: existingName, ...mode, ...scoreInfo });
+    if (!result.success) {
+      alert("ランキングへの記録に失敗しました。通信状況をご確認のうえ、もう一度プレイしてお試しください。");
+    }
     renderRanking(mode, existingName);
     renderGenreRankingOverview();
   } else {
@@ -418,10 +427,17 @@ els.rankingNameSaveBtn.addEventListener("click", async () => {
 
   const pending = state.pendingRankingScore;
   if (pending) {
-    await saveScoreToRanking({ name, ...pending.mode, ...pending.scoreInfo });
-    renderRanking(pending.mode, name);
-    renderGenreRankingOverview();
-    state.pendingRankingScore = null;
+    const result = await saveScoreToRanking({ name, ...pending.mode, ...pending.scoreInfo });
+    if (result.success) {
+      renderRanking(pending.mode, name);
+      renderGenreRankingOverview();
+      state.pendingRankingScore = null;
+    } else {
+      // 失敗時はpendingRankingScoreを残しておき、名前入力欄を再表示して
+      // 「保存」を押し直せば同じ記録を再送信できるようにする。
+      alert("ランキングへの記録に失敗しました。通信状況をご確認のうえ、もう一度「保存」を押してください。");
+      els.rankingNameSetup.style.display = "block";
+    }
   }
 });
 
@@ -603,6 +619,16 @@ function showSetupScreen() {
 }
 
 function showPracticeScreen() {
+  // 選択中のサブジャンルが未購入(ロック中)のまま「はじめる」が押された場合、
+  // 無関係な別ジャンルで練習を始めてしまわないよう、購入フロー(unlocks.js側)に
+  // 委ねて練習開始はしない。
+  const activeGroup = document.querySelector(`.subgenre-bar[data-category-group="${state.category}"]`);
+  const lockedActiveBtn = activeGroup && activeGroup.querySelector(".genre-btn.active.is-locked");
+  if (lockedActiveBtn) {
+    lockedActiveBtn.click();
+    return;
+  }
+
   els.setupScreen.style.display = "none";
   els.practiceScreen.style.display = "block";
   startRound();
