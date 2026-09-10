@@ -254,7 +254,7 @@ function stopTicking() {
 
 function buildQueue() {
   // 歌詞ジャンルだけはシャッフルせず、歌詞の上から順番に出題する。
-  return state.genre === "lyrics" ? [...state.pool] : shuffle(state.pool);
+  return state.genre.startsWith("lyrics") ? [...state.pool] : shuffle(state.pool);
 }
 
 function refillQueueIfNeeded() {
@@ -274,7 +274,7 @@ function nextItem() {
   applyLongTextLayout(item);
 
   // 歌詞ジャンルのときだけ、その行がどの曲のものかを上部に表示する。
-  if (state.genre === "lyrics" && item.songTitle) {
+  if (state.genre.startsWith("lyrics") && item.songTitle) {
     const credit = `『${item.songTitle}』${item.artist ? " / " + item.artist : ""}` +
       (item.lyricist || item.composer ? `（作詞:${item.lyricist || "-"} 作曲:${item.composer || "-"}）` : "");
     els.lyricsCredit.textContent = credit;
@@ -303,7 +303,7 @@ function startRound() {
     : state.genre === "itpass" ? ITPASS_SENTENCES
     : state.genre === "email" ? EMAIL_SENTENCES
     : state.genre === "dev" ? DEV_SENTENCES
-    : state.genre === "lyrics" ? LYRICS_SENTENCES
+    : state.genre.startsWith("lyrics") ? (LYRICS_SENTENCES_BY_GENRE[state.genre] || [])
     : SENTENCE_SETS[state.difficulty];
 
   // 「！？を除く」設定の場合、感嘆符・疑問符を含む問題をプールから取り除く。
@@ -385,6 +385,7 @@ async function submitRankingResult(scoreInfo) {
     els.rankingNameSetup.style.display = "none";
     const result = await saveScoreToRanking({ name: existingName, ...mode, ...scoreInfo });
     if (!result.success) {
+      console.error("submitRankingResult: 記録に失敗しました", result.error);
       alert("ランキングへの記録に失敗しました。通信状況をご確認のうえ、もう一度プレイしてお試しください。");
     }
     renderRanking(mode, existingName);
@@ -435,6 +436,7 @@ els.rankingNameSaveBtn.addEventListener("click", async () => {
     } else {
       // 失敗時はpendingRankingScoreを残しておき、名前入力欄を再表示して
       // 「保存」を押し直せば同じ記録を再送信できるようにする。
+      console.error("rankingNameSaveBtn: 記録に失敗しました", result.error);
       alert("ランキングへの記録に失敗しました。通信状況をご確認のうえ、もう一度「保存」を押してください。");
       els.rankingNameSetup.style.display = "block";
     }
