@@ -659,6 +659,7 @@ function showSetupScreen() {
   state.roundOver = true;
   els.practiceScreen.style.display = "none";
   els.setupScreen.style.display = "block";
+  window.scrollTo(0, 0);
   renderWeakKeys();
 }
 
@@ -675,6 +676,7 @@ function showPracticeScreen() {
 
   els.setupScreen.style.display = "none";
   els.practiceScreen.style.display = "block";
+  window.scrollTo(0, 0);
   startRound();
 }
 
