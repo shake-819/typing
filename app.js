@@ -3,7 +3,7 @@ const DURATION_OPTIONS = [30, 60, 90, 120];
 const DEFAULT_DURATION = 30;
 
 const state = {
-  category: "typing", // "typing" / "business" / "it" / "programming" / "lyrics"
+  category: "typing", // "typing" / "business" / "it" / "programming" / "lyrics" / "other"
   genre: "difficulty", // "difficulty": 難易度別セット / "business": よく使うビジネス用語50 / "js": JS構文あるある50 / "sql": SQL構文あるある50 / "lyrics": 歌詞
   difficulty: "easy",
   duration: DEFAULT_DURATION,
@@ -333,6 +333,7 @@ function startRound() {
     : state.genre === "keigo" ? KEIGO_SENTENCES
     : state.genre === "dev" ? DEV_SENTENCES
     : state.genre.startsWith("lyrics") ? (LYRICS_SENTENCES_BY_GENRE[state.genre] || [])
+    : state.genre === "maniawankatta" ? MANIAWANKATTA_SENTENCES
     : SENTENCE_SETS[state.difficulty];
 
   // 「！？を除く」設定の場合、感嘆符・疑問符を含む問題をプールから取り除く。
