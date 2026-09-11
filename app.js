@@ -676,7 +676,7 @@ function showPracticeScreen() {
 
   els.setupScreen.style.display = "none";
   els.practiceScreen.style.display = "block";
-  window.scrollTo(0, 0);
+  window.scrollTo(0, window.innerHeight / 2);
   startRound();
 }
 
