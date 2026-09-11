@@ -161,6 +161,7 @@ const RANKING_CATEGORIES = [
       { genre: "it", difficulty: "", label: "IT用語" },
       { genre: "dev", difficulty: "", label: "実務会話" },
       { genre: "itpass", difficulty: "", label: "Iパス用語(有料)" },
+      { genre: "kihonjoho", difficulty: "", label: "基本情報(有料)" },
     ],
   },
   {
