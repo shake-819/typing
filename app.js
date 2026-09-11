@@ -328,6 +328,7 @@ function startRound() {
     : state.genre === "vba" ? VBA_SENTENCES
     : state.genre === "it" ? IT_SENTENCES
     : state.genre === "itpass" ? ITPASS_SENTENCES
+    : state.genre === "kihonjoho" ? KIHONJOHO_SENTENCES
     : state.genre === "email" ? EMAIL_SENTENCES
     : state.genre === "keigo" ? KEIGO_SENTENCES
     : state.genre === "dev" ? DEV_SENTENCES
