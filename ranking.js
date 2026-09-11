@@ -152,6 +152,7 @@ const RANKING_CATEGORIES = [
     genres: [
       { genre: "business", difficulty: "", label: "ビジネス用語" },
       { genre: "email", difficulty: "", label: "メール" },
+      { genre: "keigo", difficulty: "", label: "敬語(有料)" },
     ],
   },
   {
@@ -183,6 +184,13 @@ const RANKING_CATEGORIES = [
       difficulty: "",
       label: song.title,
     })),
+  },
+  {
+    category: "other",
+    label: "その他",
+    genres: [
+      { genre: "maniawankatta", difficulty: "", label: "間に合わんかった鯖語録" },
+    ],
   },
 ];
 
