@@ -428,6 +428,22 @@ summary:focus-visible {
   color: var(--miss);
 }
 
+.auth-signup-link {
+  flex-basis: 100%;
+  margin: 4px 0 0;
+  font-size: 12px;
+  text-align: right;
+}
+
+.auth-signup-link a {
+  color: var(--indigo);
+  text-decoration: underline;
+}
+
+.auth-signup-link a:hover {
+  text-decoration: none;
+}
+
 /* 練習画面の上段 */
 .practice-topbar {
   display: flex;
