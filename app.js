@@ -21,6 +21,7 @@ const state = {
   roundOver: false,
   roundStats: { correct: 0, miss: 0, itemsDone: 0, keyMissMap: {}, keyAttemptMap: {} },
   imeMismatchActive: false, // 変換ありモードで「今まさに打ち間違えている状態」かどうか(ミスの二重カウント防止用)
+  imeMaxMatched: 0, // 変換ありモードで、今の設問について「これまでに正しく入力できた文字数」の最大値(打鍵数の二重計上防止用)
   isComposing: false, // 変換ありモードでIME変換中(未確定文字入力中)かどうか(変換中の誤ミス判定防止用)
   pendingRankingScore: null // 名前未登録の状態でラウンドが終わったとき、名前登録後に送信するスコアを一時保存する
 };
@@ -327,6 +328,7 @@ function nextItem() {
 
   if (state.conversionMode === "on") {
     state.imeMismatchActive = false;
+    state.imeMaxMatched = 0;
     els.imeInput.value = "";
     els.imeInput.classList.remove("ime-wrong");
     renderConversionProgress();
@@ -354,6 +356,7 @@ function startRound() {
     : state.genre === "maniawankatta" ? MANIAWANKATTA_SENTENCES
     : state.genre === "kokugospi" ? KOKUGOSPI_SENTENCES
     : state.genre === "nagabun" ? NAGABUN_SENTENCES
+    : state.genre === "shakaikagaku" ? SHAKAIKAGAKU_SENTENCES
     : SENTENCE_SETS[state.difficulty];
 
   // 「！？を除く」設定の場合、感嘆符・疑問符を含む問題をプールから取り除く。
@@ -595,14 +598,27 @@ function renderConversionProgress(skipMissCheck) {
   if (skipMissCheck) {
     // 変換中は見た目の色分け(下記のhtml組み立て)だけ更新し、ミスカウント・
     // 不一致フラグの操作は行わない(確定後のinputイベントで改めて判定する)。
-  } else if (hasMismatch && !state.imeMismatchActive) {
-    state.roundStats.miss++;
-    state.imeMismatchActive = true;
-    els.imeInput.classList.add("ime-wrong");
-    setTimeout(() => els.imeInput.classList.remove("ime-wrong"), 300);
-    updateStatsDisplay();
-  } else if (!hasMismatch) {
-    state.imeMismatchActive = false;
+  } else {
+    // 「これまでに正しく入力できた文字数」の最大値を更新できていれば、
+    // その差分だけ打鍵数(correct)に計上する。設問を打ち終わるまで
+    // 加算を待たず、1文字確定するたびにリアルタイムで反映するための処理。
+    // (imeMaxMatchedは減らないので、打ち間違えて後退してから打ち直しても
+    //  同じ文字が二重に計上されることはない)
+    if (matchedLen > state.imeMaxMatched) {
+      state.roundStats.correct += matchedLen - state.imeMaxMatched;
+      state.imeMaxMatched = matchedLen;
+      updateStatsDisplay();
+    }
+
+    if (hasMismatch && !state.imeMismatchActive) {
+      state.roundStats.miss++;
+      state.imeMismatchActive = true;
+      els.imeInput.classList.add("ime-wrong");
+      setTimeout(() => els.imeInput.classList.remove("ime-wrong"), 300);
+      updateStatsDisplay();
+    } else if (!hasMismatch) {
+      state.imeMismatchActive = false;
+    }
   }
 
   const furiganaOn = state.furiganaMode === "on" && item.furigana && item.furigana.length > 0;
@@ -635,7 +651,7 @@ function renderConversionProgress(skipMissCheck) {
   // IME変換中(未確定)は、たまたま現在の未確定文字列がお手本と一致して見えても
   // 完了扱いにはしない(確定後のinputイベントで改めて判定する)。
   if (!skipMissCheck && typed === target) {
-    state.roundStats.correct += target.length;
+    // 打鍵数(correct)は上のimeMaxMatched更新処理で既に加算済みのため、ここでは加算しない。
     state.roundStats.itemsDone++;
     state.imeMismatchActive = false;
     updateStatsDisplay();
