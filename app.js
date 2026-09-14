@@ -546,6 +546,18 @@ function handleImeInput() {
   autoResizeImeInput();
 }
 
+// カーソル位置に改行を挿入する(ブラウザ標準のEnter挿入に任せると、
+// Ctrl併用時は「ショートカット扱い」されて何も挿入されないブラウザがあるため、
+// 値を直接書き換えてカーソル位置も追従させる)。
+function insertNewlineAtCursor(textarea) {
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const value = textarea.value;
+  textarea.value = value.slice(0, start) + "\n" + value.slice(end);
+  const newPos = start + 1;
+  textarea.selectionStart = textarea.selectionEnd = newPos;
+}
+
 function handleImeKeydown(e) {
   if (state.conversionMode !== "on" || state.roundOver) return;
   if (e.key !== "Enter") return;
@@ -554,8 +566,16 @@ function handleImeKeydown(e) {
   if (e.isComposing || e.keyCode === 229) return;
 
   if (e.ctrlKey) {
-    // Ctrl+Enterは改行を挿入するためのキーなので、答え合わせはせず
-    // textarea標準の改行挿入動作にそのまま任せる(preventDefaultしない)。
+    // Ctrl+Enterは改行を挿入するためのキー。
+    // value直接書き換えは"input"イベントを発火させないため、
+    // タイマー開始とリサイズをここで明示的に行う。
+    e.preventDefault();
+    if (!state.startTime && !state.roundOver) {
+      state.startTime = Date.now();
+      startTicking();
+    }
+    insertNewlineAtCursor(els.imeInput);
+    autoResizeImeInput();
     return;
   }
 
