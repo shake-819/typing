@@ -334,6 +334,7 @@ function startRound() {
     : state.genre === "dev" ? DEV_SENTENCES
     : state.genre.startsWith("lyrics") ? (LYRICS_SENTENCES_BY_GENRE[state.genre] || [])
     : state.genre === "maniawankatta" ? MANIAWANKATTA_SENTENCES
+    : state.genre === "nagabun" ? NAGABUN_SENTENCES
     : SENTENCE_SETS[state.difficulty];
 
   // 「！？を除く」設定の場合、感嘆符・疑問符を含む問題をプールから取り除く。
@@ -676,7 +677,7 @@ function showPracticeScreen() {
 
   els.setupScreen.style.display = "none";
   els.practiceScreen.style.display = "block";
-  window.scrollTo(0, window.innerHeight / 2.2);
+  window.scrollTo(0, window.innerHeight / 2);
   startRound();
 }
 
