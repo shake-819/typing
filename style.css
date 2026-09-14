@@ -582,6 +582,19 @@ summary:focus-visible {
   border-radius: var(--r-key);
   color: var(--ink);
   font-family: var(--font-mono);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  resize: none;
+  overflow-y: hidden;
+}
+
+/* nagabunなど改行を含む長文入力時は、display-line/romaji-lineと同じく
+   左揃え+スクロールに切り替える(auto-resizeで伸びた高さがここで頭打ちになる) */
+.ime-input.long-text {
+  text-align: left;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--paper-soft);
 }
 
 .ime-input:focus {
