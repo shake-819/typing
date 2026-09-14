@@ -43,6 +43,7 @@ const els = {
   modeSettingBlock: document.getElementById("mode-setting-block"),
   progressLabel: document.getElementById("progress-label"),
   lyricsCredit: document.getElementById("lyrics-credit"),
+  displayHint: document.getElementById("display-hint"),
   speedOut: document.getElementById("speed-out"),
   timeOut: document.getElementById("time-out"),
   missOut: document.getElementById("miss-out"),
@@ -314,6 +315,16 @@ function nextItem() {
     els.lyricsCredit.textContent = "";
   }
 
+  // item.hint(国語SPIなど、作者名や代表作といった補足)があるときだけ
+  // displayの右下に小さく表示する。タイピング判定には一切関与しない。
+  if (item.hint) {
+    els.displayHint.textContent = item.hint;
+    els.displayHint.hidden = false;
+  } else {
+    els.displayHint.hidden = true;
+    els.displayHint.textContent = "";
+  }
+
   if (state.conversionMode === "on") {
     state.imeMismatchActive = false;
     els.imeInput.value = "";
@@ -341,6 +352,7 @@ function startRound() {
     : state.genre === "dev" ? DEV_SENTENCES
     : state.genre.startsWith("lyrics") ? (LYRICS_SENTENCES_BY_GENRE[state.genre] || [])
     : state.genre === "maniawankatta" ? MANIAWANKATTA_SENTENCES
+    : state.genre === "kokugospi" ? KOKUGOSPI_SENTENCES
     : state.genre === "nagabun" ? NAGABUN_SENTENCES
     : SENTENCE_SETS[state.difficulty];
 
@@ -393,6 +405,8 @@ function finishRound() {
   els.displayLine.textContent = "";
   els.lyricsCredit.hidden = true;
   els.lyricsCredit.textContent = "";
+  els.displayHint.hidden = true;
+  els.displayHint.textContent = "";
   els.imeInput.value = "";
   autoResizeImeInput();
   els.imeInput.blur();
