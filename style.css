@@ -576,6 +576,17 @@ summary:focus-visible {
   color: var(--indigo-deep);
 }
 
+/* 変換ありモードで、打った内容がお手本とズレている位置の1文字 */
+.disp-wrong {
+  display: inline-block;
+  min-width: 0.9ch;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--miss-bg);
+  box-shadow: 0 0 0 1px var(--miss);
+  color: var(--miss);
+}
+
 .ime-input {
   display: block;
   width: 100%;
