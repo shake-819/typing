@@ -20,6 +20,7 @@ const state = {
   lastStatsRenderAt: 0,
   roundOver: false,
   roundStats: { correct: 0, miss: 0, itemsDone: 0, keyMissMap: {}, keyAttemptMap: {} },
+  imeMismatchActive: false, // 変換ありモードで「今まさに打ち間違えている状態」かどうか(ミスの二重カウント防止用)
   pendingRankingScore: null // 名前未登録の状態でラウンドが終わったとき、名前登録後に送信するスコアを一時保存する
 };
 
@@ -277,18 +278,13 @@ function escapeHtml(text) {
 // item.furigana(例: [["会議","かいぎ"], ["資料","しりょう"]])があり、
 // かつふりがな表示がONのときだけ、該当する単語を<ruby>タグに置き換えて表示する。
 // item.display自体(タイピング判定・ランキング等で使う生テキスト)は一切変更しない。
+// 変換なしモード用の表示。変換ありモードは renderConversionProgress() が別途担当する。
 function renderDisplayLine(item) {
-  // 変換ありモードでは、改行(\n)の位置がそのまま「Ctrl+Enterで改行すべき場所」の
-  // 目印になるので、見た目にも↵を残して分かるようにする。
-  // (変換なしモードでは\nは単なる読みやすさのための見た目上の区切りで、
-  //  実際に打つ必要はないため↵は出さない)
-  const text = state.conversionMode === "on" ? item.display.replace(/\n/g, "↵\n") : item.display;
-
   if (state.furiganaMode !== "on" || !item.furigana || item.furigana.length === 0) {
-    els.displayLine.textContent = text;
+    els.displayLine.textContent = item.display;
     return;
   }
-  let html = escapeHtml(text);
+  let html = escapeHtml(item.display);
   item.furigana.forEach(([word, reading]) => {
     // 同じ単語が複数回出てくる行にも対応するため、一致箇所すべてを置き換える。
     // ただし既に<ruby>化した箇所を二重に置き換えないよう、プレーンな単語のみを対象にする。
@@ -304,7 +300,6 @@ function nextItem() {
   state.currentItem = item;
   els.progressLabel.textContent = `${state.roundStats.itemsDone + 1}問目`;
 
-  renderDisplayLine(item);
   applyLongTextLayout(item);
 
   // 歌詞ジャンルのときだけ、その行がどの曲のものかを上部に表示する。
@@ -319,11 +314,13 @@ function nextItem() {
   }
 
   if (state.conversionMode === "on") {
+    state.imeMismatchActive = false;
     els.imeInput.value = "";
     els.imeInput.classList.remove("ime-wrong");
-    autoResizeImeInput();
+    renderConversionProgress();
     els.imeInput.focus();
   } else {
+    renderDisplayLine(item);
     state.engine = new TypingEngine(item.kana, { caseSensitive: state.genre === "js" || state.genre === "sql" || state.genre === "vba" });
     buildRomajiLine();
   }
@@ -368,7 +365,7 @@ function startRound() {
   els.romajiLine.style.display = !isConversion ? "block" : "none";
   els.keyboardContainer.style.display = !isConversion ? "flex" : "none";
   els.focusHint.textContent = isConversion
-    ? "入力してEnterで確定してください(IMEで変換できます・Ctrl+Enterで改行) / Escでホームに戻れます"
+    ? "入力してください(IMEで変換できます・打った文字は自動で判定されます) / Escでホームに戻れます"
     : "キーボードで入力を開始してください / Escでホームに戻れます";
 
   updateStatsDisplay();
@@ -527,9 +524,9 @@ function handleKeydown(e) {
 }
 
 // --- 変換ありモード: 実際のIME入力を<textarea>にそのまま任せ、
-//     Enterが押された時点(IMEの変換確定中でないとき)に答え合わせをする ---
-// nagabunのように display に\nを含む問題では、Ctrl+Enterで改行を入れながら
-// 全文を入力し、最後に(Ctrlなしの)Enterで一括判定する。
+//     打つたびにdisplay側の文字を色付けして進捗を見せる方式 ---
+// (変換なしモードのromaji-lineの色付けと同じ考え方。Enterキーは
+//  「確定」用の特別扱いをせず、textarea標準の改行挿入にそのまま任せる)
 
 // textareaの高さを内容に合わせて伸縮させる(long-text時はCSS側のmax-heightで頭打ちになる)。
 function autoResizeImeInput() {
@@ -538,69 +535,100 @@ function autoResizeImeInput() {
   ta.style.height = ta.scrollHeight + "px";
 }
 
+// 指定した文章内でfuriganaの単語が出現する位置を調べ、文字ごとに
+// {start, len, reading} を割り当てる(renderConversionProgressでの<ruby>組み立て用)。
+function buildFuriganaMarks(text, furiganaList) {
+  const marks = new Array(text.length).fill(null);
+  furiganaList.forEach(([word, reading]) => {
+    let searchFrom = 0;
+    let idx;
+    while ((idx = text.indexOf(word, searchFrom)) !== -1) {
+      let overlapped = false;
+      for (let k = 0; k < word.length; k++) {
+        if (marks[idx + k]) { overlapped = true; break; }
+      }
+      if (!overlapped) {
+        for (let k = 0; k < word.length; k++) {
+          marks[idx + k] = { start: idx, len: word.length, reading };
+        }
+      }
+      searchFrom = idx + word.length;
+    }
+  });
+  return marks;
+}
+
+// 入力のたびに呼ばれるメイン処理。typedとdisplay(お手本)を先頭から
+// 1文字ずつ比べて、一致している部分を「入力済み」、次の1文字を「現在位置」、
+// 一致しなくなった位置を「ミス」として色分け表示する。
+// 最後まで完全一致したら自動的に次の問題へ進む(Enterでの確定操作は不要)。
+function renderConversionProgress() {
+  const item = state.currentItem;
+  const target = item.display;
+  const typed = els.imeInput.value;
+
+  let matchedLen = 0;
+  while (matchedLen < typed.length && matchedLen < target.length && typed[matchedLen] === target[matchedLen]) {
+    matchedLen++;
+  }
+  // typedの方が長いのに、その位置で一致していない = 打ち間違えている
+  const hasMismatch = matchedLen < typed.length;
+
+  if (hasMismatch && !state.imeMismatchActive) {
+    state.roundStats.miss++;
+    state.imeMismatchActive = true;
+    els.imeInput.classList.add("ime-wrong");
+    setTimeout(() => els.imeInput.classList.remove("ime-wrong"), 300);
+    updateStatsDisplay();
+  } else if (!hasMismatch) {
+    state.imeMismatchActive = false;
+  }
+
+  const furiganaOn = state.furiganaMode === "on" && item.furigana && item.furigana.length > 0;
+  const marks = furiganaOn ? buildFuriganaMarks(target, item.furigana) : null;
+
+  let html = "";
+  for (let i = 0; i < target.length; i++) {
+    const ch = target[i];
+    const glyph = ch === "\n" ? "↵" : escapeHtml(ch);
+    const cls = i < matchedLen ? "romaji-done"
+      : i === matchedLen && hasMismatch ? "disp-wrong"
+      : i === matchedLen ? "romaji-current"
+      : "romaji-pending";
+
+    const mark = marks && marks[i];
+    if (mark && mark.start === i) html += "<ruby>";
+    html += `<span class="${cls}">${glyph}</span>`;
+    if (ch === "\n") html += "\n"; // white-space:pre-lineで実際の改行にする
+    if (mark && mark.start + mark.len - 1 === i) html += `<rt>${escapeHtml(mark.reading)}</rt></ruby>`;
+  }
+  els.displayLine.innerHTML = html;
+
+  if (els.displayLine.classList.contains("long-text")) {
+    const currentSpan = els.displayLine.querySelector(".romaji-current, .disp-wrong");
+    if (currentSpan) currentSpan.scrollIntoView({ block: "center", behavior: "smooth" });
+  }
+
+  autoResizeImeInput();
+
+  if (typed === target) {
+    state.roundStats.correct += target.length;
+    state.roundStats.itemsDone++;
+    state.imeMismatchActive = false;
+    updateStatsDisplay();
+    setTimeout(nextItem, 150);
+  }
+}
+
 function handleImeInput() {
   if (!state.startTime && !state.roundOver) {
     state.startTime = Date.now();
     startTicking();
   }
-  autoResizeImeInput();
-}
-
-// カーソル位置に改行を挿入する(ブラウザ標準のEnter挿入に任せると、
-// Ctrl併用時は「ショートカット扱い」されて何も挿入されないブラウザがあるため、
-// 値を直接書き換えてカーソル位置も追従させる)。
-function insertNewlineAtCursor(textarea) {
-  const start = textarea.selectionStart;
-  const end = textarea.selectionEnd;
-  const value = textarea.value;
-  textarea.value = value.slice(0, start) + "\n" + value.slice(end);
-  const newPos = start + 1;
-  textarea.selectionStart = textarea.selectionEnd = newPos;
-}
-
-function handleImeKeydown(e) {
-  if (state.conversionMode !== "on" || state.roundOver) return;
-  if (e.key !== "Enter") return;
-  // IMEで変換候補を確定させるためのEnter(変換中)は無視し、
-  // 完全に確定した状態でのEnterだけを対象にする。
-  if (e.isComposing || e.keyCode === 229) return;
-
-  if (e.ctrlKey) {
-    // Ctrl+Enterは改行を挿入するためのキー。
-    // value直接書き換えは"input"イベントを発火させないため、
-    // タイマー開始とリサイズをここで明示的に行う。
-    e.preventDefault();
-    if (!state.startTime && !state.roundOver) {
-      state.startTime = Date.now();
-      startTicking();
-    }
-    insertNewlineAtCursor(els.imeInput);
-    autoResizeImeInput();
-    return;
-  }
-
-  e.preventDefault();
-  const typed = els.imeInput.value.trim();
-  if (!typed) return;
-
-  if (typed === state.currentItem.display) {
-    state.roundStats.correct += typed.length;
-    state.roundStats.itemsDone++;
-    els.imeInput.classList.remove("ime-wrong");
-    updateStatsDisplay();
-    setTimeout(nextItem, 150);
-  } else {
-    state.roundStats.miss++;
-    els.imeInput.classList.add("ime-wrong");
-    els.imeInput.value = "";
-    autoResizeImeInput();
-    setTimeout(() => els.imeInput.classList.remove("ime-wrong"), 300);
-    updateStatsDisplay();
-  }
+  renderConversionProgress();
 }
 
 els.imeInput.addEventListener("input", handleImeInput);
-els.imeInput.addEventListener("keydown", handleImeKeydown);
 
 function escapeHtml(str) {
   return str
@@ -697,7 +725,11 @@ els.furiganaButtons.forEach(btn => {
     state.furiganaMode = btn.dataset.furigana;
     // 練習中に切り替えた場合、今表示中の問題文にもすぐ反映する
     if (state.currentItem) {
-      renderDisplayLine(state.currentItem);
+      if (state.conversionMode === "on") {
+        renderConversionProgress();
+      } else {
+        renderDisplayLine(state.currentItem);
+      }
     }
   });
 });
