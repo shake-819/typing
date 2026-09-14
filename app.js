@@ -21,6 +21,7 @@ const state = {
   roundOver: false,
   roundStats: { correct: 0, miss: 0, itemsDone: 0, keyMissMap: {}, keyAttemptMap: {} },
   imeMismatchActive: false, // 変換ありモードで「今まさに打ち間違えている状態」かどうか(ミスの二重カウント防止用)
+  isComposing: false, // 変換ありモードでIME変換中(未確定文字入力中)かどうか(変換中の誤ミス判定防止用)
   pendingRankingScore: null // 名前未登録の状態でラウンドが終わったとき、名前登録後に送信するスコアを一時保存する
 };
 
@@ -562,7 +563,7 @@ function buildFuriganaMarks(text, furiganaList) {
 // 1文字ずつ比べて、一致している部分を「入力済み」、次の1文字を「現在位置」、
 // 一致しなくなった位置を「ミス」として色分け表示する。
 // 最後まで完全一致したら自動的に次の問題へ進む(Enterでの確定操作は不要)。
-function renderConversionProgress() {
+function renderConversionProgress(skipMissCheck) {
   const item = state.currentItem;
   const target = item.display;
   const typed = els.imeInput.value;
@@ -572,9 +573,14 @@ function renderConversionProgress() {
     matchedLen++;
   }
   // typedの方が長いのに、その位置で一致していない = 打ち間違えている
+  // ただしIME変換中(未確定)は、確定前のひらがなが一時的にお手本の漢字と
+  // 食い違って見えるだけなので、ミス判定そのものをスキップする。
   const hasMismatch = matchedLen < typed.length;
 
-  if (hasMismatch && !state.imeMismatchActive) {
+  if (skipMissCheck) {
+    // 変換中は見た目の色分け(下記のhtml組み立て)だけ更新し、ミスカウント・
+    // 不一致フラグの操作は行わない(確定後のinputイベントで改めて判定する)。
+  } else if (hasMismatch && !state.imeMismatchActive) {
     state.roundStats.miss++;
     state.imeMismatchActive = true;
     els.imeInput.classList.add("ime-wrong");
@@ -611,7 +617,9 @@ function renderConversionProgress() {
 
   autoResizeImeInput();
 
-  if (typed === target) {
+  // IME変換中(未確定)は、たまたま現在の未確定文字列がお手本と一致して見えても
+  // 完了扱いにはしない(確定後のinputイベントで改めて判定する)。
+  if (!skipMissCheck && typed === target) {
     state.roundStats.correct += target.length;
     state.roundStats.itemsDone++;
     state.imeMismatchActive = false;
@@ -620,15 +628,29 @@ function renderConversionProgress() {
   }
 }
 
-function handleImeInput() {
+function handleImeInput(e) {
   if (!state.startTime && !state.roundOver) {
     state.startTime = Date.now();
     startTicking();
   }
-  renderConversionProgress();
+  // ブラウザが付与するe.isComposingに加え、compositionstart/endで手動追跡している
+  // state.isComposingも併用する(IME・ブラウザによってはisComposingの挙動に
+  // ばらつきがあるため、二重にガードして変換中の誤ミス判定を確実に防ぐ)。
+  const composing = (e && e.isComposing) || state.isComposing;
+  renderConversionProgress(composing);
 }
 
 els.imeInput.addEventListener("input", handleImeInput);
+els.imeInput.addEventListener("compositionstart", () => {
+  state.isComposing = true;
+});
+els.imeInput.addEventListener("compositionend", () => {
+  state.isComposing = false;
+  // 確定直後の状態で改めてミス判定・完了判定を行う
+  // (多くのブラウザではこの後にinputイベントも発火するが、
+  //  imeMismatchActiveのガードにより二重カウントは発生しない)。
+  renderConversionProgress(false);
+});
 
 function escapeHtml(str) {
   return str
