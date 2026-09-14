@@ -483,6 +483,15 @@ summary:focus-visible {
 
 /* ---------------------------- 練習画面(原稿用紙カード) ---------------------------- */
 
+/* 練習画面だけ.appのmax-width(760px)より広く使えるようにする。
+   ビューポート中央基準で幅を取り直すことで、ヘッダーや設定画面の幅には影響させない。 */
+#practice-screen {
+  max-width: 980px;
+  width: calc(100vw - 2.5rem);
+  margin-left: 50%;
+  transform: translateX(-50%);
+}
+
 .practice-card {
   position: relative;
   background: var(--paper);
