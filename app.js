@@ -337,6 +337,7 @@ function startRound() {
     : state.genre === "kihonjoho" ? KIHONJOHO_SENTENCES
     : state.genre === "email" ? EMAIL_SENTENCES
     : state.genre === "keigo" ? KEIGO_SENTENCES
+    : state.genre === "numbers" ? NUMBERS_SENTENCES
     : state.genre === "dev" ? DEV_SENTENCES
     : state.genre.startsWith("lyrics") ? (LYRICS_SENTENCES_BY_GENRE[state.genre] || [])
     : state.genre === "maniawankatta" ? MANIAWANKATTA_SENTENCES
