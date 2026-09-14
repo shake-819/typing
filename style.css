@@ -526,6 +526,7 @@ summary:focus-visible {
   color: var(--ink);
   margin: 0 0 0.75rem;
   line-height: 1.6;
+  white-space: pre-line;
 }
 
 .display-line ruby {
