@@ -127,6 +127,7 @@
         </div>
         <div class="difficulty-bar subgenre-bar" data-category-group="other" style="display:none;">
           <button class="genre-btn active" data-genre="maniawankatta">間に合わんかった鯖語録</button>
+          <button class="genre-btn is-locked" data-genre="kokugospi" data-locked-pack="kokugospi">国語SPI（有料）</button>
         </div>
       </div>
 
@@ -191,7 +192,12 @@
         <!-- 歌詞ジャンルのときだけ「曲名 / アーティスト（作詞・作曲）」を表示する。他ジャンルでは常にhidden。 -->
         <p class="lyrics-credit" id="lyrics-credit" hidden></p>
 
-        <p class="display-line" id="display-line"></p>
+        <div class="display-line-wrap">
+          <p class="display-line" id="display-line"></p>
+          <!-- 国語SPIなど、displayの右下に補足(作者名・代表作など)を小さく添えたい
+               ジャンル専用。item.hintがある問題のときだけ表示する(入力対象には含めない)。 -->
+          <p class="display-hint" id="display-hint" hidden></p>
+        </div>
         <div class="romaji-line" id="romaji-line"></div>
         <textarea
           id="ime-input"
@@ -274,6 +280,7 @@
   <script src="dev-sentences.js"></script>
   <script src="lyrics-sentences.js"></script>
   <script src="maniawankatta-sentences.js"></script>
+  <script src="kokugospi-sentences.js"></script>
   <script src="typing-engine.js"></script>
   <script src="keyboard.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
