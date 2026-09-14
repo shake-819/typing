@@ -144,6 +144,8 @@ const RANKING_CATEGORIES = [
       { genre: "difficulty", difficulty: "easy", label: "易しい" },
       { genre: "difficulty", difficulty: "normal", label: "ふつう" },
       { genre: "difficulty", difficulty: "hard", label: "難しい" },
+      { genre: "difficulty", difficulty: "extreme", label: "激むず" },
+      { genre: "nagabun", difficulty: "", label: "長文" },
     ],
   },
   {
