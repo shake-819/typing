@@ -193,6 +193,7 @@ const RANKING_CATEGORIES = [
     label: "その他",
     genres: [
       { genre: "maniawankatta", difficulty: "", label: "間に合わんかった鯖語録" },
+      { genre: "kokugospi", difficulty: "", label: "国語SPI(有料)" },
     ],
   },
 ];
