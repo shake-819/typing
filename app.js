@@ -135,6 +135,7 @@ function applyLongTextLayout(item) {
   const isLong = item.kana.length > LONG_TEXT_THRESHOLD;
   els.displayLine.classList.toggle("long-text", isLong);
   els.romajiLine.classList.toggle("long-text", isLong);
+  els.imeInput.classList.toggle("long-text", isLong);
 }
 
 // お題が変わったタイミングで1回だけ、モーラごとの入れ物(span)を作る。
@@ -277,11 +278,17 @@ function escapeHtml(text) {
 // かつふりがな表示がONのときだけ、該当する単語を<ruby>タグに置き換えて表示する。
 // item.display自体(タイピング判定・ランキング等で使う生テキスト)は一切変更しない。
 function renderDisplayLine(item) {
+  // 変換ありモードでは、改行(\n)の位置がそのまま「Ctrl+Enterで改行すべき場所」の
+  // 目印になるので、見た目にも↵を残して分かるようにする。
+  // (変換なしモードでは\nは単なる読みやすさのための見た目上の区切りで、
+  //  実際に打つ必要はないため↵は出さない)
+  const text = state.conversionMode === "on" ? item.display.replace(/\n/g, "↵\n") : item.display;
+
   if (state.furiganaMode !== "on" || !item.furigana || item.furigana.length === 0) {
-    els.displayLine.textContent = item.display;
+    els.displayLine.textContent = text;
     return;
   }
-  let html = escapeHtml(item.display);
+  let html = escapeHtml(text);
   item.furigana.forEach(([word, reading]) => {
     // 同じ単語が複数回出てくる行にも対応するため、一致箇所すべてを置き換える。
     // ただし既に<ruby>化した箇所を二重に置き換えないよう、プレーンな単語のみを対象にする。
@@ -314,6 +321,7 @@ function nextItem() {
   if (state.conversionMode === "on") {
     els.imeInput.value = "";
     els.imeInput.classList.remove("ime-wrong");
+    autoResizeImeInput();
     els.imeInput.focus();
   } else {
     state.engine = new TypingEngine(item.kana, { caseSensitive: state.genre === "js" || state.genre === "sql" || state.genre === "vba" });
@@ -360,7 +368,7 @@ function startRound() {
   els.romajiLine.style.display = !isConversion ? "block" : "none";
   els.keyboardContainer.style.display = !isConversion ? "flex" : "none";
   els.focusHint.textContent = isConversion
-    ? "入力してEnterで確定してください(IMEで変換できます) / Escでホームに戻れます"
+    ? "入力してEnterで確定してください(IMEで変換できます・Ctrl+Enterで改行) / Escでホームに戻れます"
     : "キーボードで入力を開始してください / Escでホームに戻れます";
 
   updateStatsDisplay();
@@ -387,6 +395,7 @@ function finishRound() {
   els.lyricsCredit.hidden = true;
   els.lyricsCredit.textContent = "";
   els.imeInput.value = "";
+  autoResizeImeInput();
   els.imeInput.blur();
   els.progressLabel.textContent = "完了";
   keyboard.highlightExpected([]);
@@ -517,21 +526,38 @@ function handleKeydown(e) {
   }
 }
 
-// --- 変換ありモード: 実際のIME入力を<input>にそのまま任せ、
+// --- 変換ありモード: 実際のIME入力を<textarea>にそのまま任せ、
 //     Enterが押された時点(IMEの変換確定中でないとき)に答え合わせをする ---
+// nagabunのように display に\nを含む問題では、Ctrl+Enterで改行を入れながら
+// 全文を入力し、最後に(Ctrlなしの)Enterで一括判定する。
+
+// textareaの高さを内容に合わせて伸縮させる(long-text時はCSS側のmax-heightで頭打ちになる)。
+function autoResizeImeInput() {
+  const ta = els.imeInput;
+  ta.style.height = "auto";
+  ta.style.height = ta.scrollHeight + "px";
+}
+
 function handleImeInput() {
   if (!state.startTime && !state.roundOver) {
     state.startTime = Date.now();
     startTicking();
   }
+  autoResizeImeInput();
 }
 
 function handleImeKeydown(e) {
   if (state.conversionMode !== "on" || state.roundOver) return;
   if (e.key !== "Enter") return;
   // IMEで変換候補を確定させるためのEnter(変換中)は無視し、
-  // 完全に確定した状態でのEnterだけを「答え合わせ」として扱う。
+  // 完全に確定した状態でのEnterだけを対象にする。
   if (e.isComposing || e.keyCode === 229) return;
+
+  if (e.ctrlKey) {
+    // Ctrl+Enterは改行を挿入するためのキーなので、答え合わせはせず
+    // textarea標準の改行挿入動作にそのまま任せる(preventDefaultしない)。
+    return;
+  }
 
   e.preventDefault();
   const typed = els.imeInput.value.trim();
@@ -547,6 +573,7 @@ function handleImeKeydown(e) {
     state.roundStats.miss++;
     els.imeInput.classList.add("ime-wrong");
     els.imeInput.value = "";
+    autoResizeImeInput();
     setTimeout(() => els.imeInput.classList.remove("ime-wrong"), 300);
     updateStatsDisplay();
   }
