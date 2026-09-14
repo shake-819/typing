@@ -155,6 +155,7 @@ const RANKING_CATEGORIES = [
       { genre: "business", difficulty: "", label: "ビジネス用語" },
       { genre: "email", difficulty: "", label: "メール" },
       { genre: "keigo", difficulty: "", label: "敬語(有料)" },
+      { genre: "numbers", difficulty: "", label: "数字・日付・単位(有料)" },
     ],
   },
   {
