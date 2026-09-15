@@ -112,7 +112,15 @@ class TypingEngine {
   displayPatternForCurrentUnit() {
     if (this.isDone) return "";
     const unit = this.currentUnit;
-    return unit.patterns.find(p => p.startsWith(this.typedBuffer)) || unit.patterns[0];
+    const len = this.typedBuffer.length;
+    // 「ん」の n/nn/xn のように、typedBuffer("n")自体が完全一致するパターン
+    // ("n")と、まだ続きがあるパターン("nn"など)が両方存在するケースがある。
+    // ここで長さの等しい("n")側を選んでしまうと、次に打つべき文字が
+    // 存在せず romaji-current のハイライトが表示できなくなってしまう。
+    // そのため、続きが残っている(typedBufferより長い)パターンを優先して選ぶ。
+    return unit.patterns.find(p => p.length > len && p.startsWith(this.typedBuffer))
+      || unit.patterns.find(p => p.startsWith(this.typedBuffer))
+      || unit.patterns[0];
   }
 
   // 1キー入力を処理する。戻り値: "progress" | "unit-complete" | "miss" | "ignored"
