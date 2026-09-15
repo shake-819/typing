@@ -124,6 +124,36 @@ async function saveScoreToRanking({ name, genre, difficulty, speed, accuracy, mi
   }
 }
 
+// public.users.typing_score(総打鍵数の累計)に今回ラウンド分を加算する。
+// unlock_sentence_pack等とは違い関数(RPC)は使わず、
+// 「今の値をSELECTで取得 → +amount → UPDATEで書き戻す」だけのシンプルな実装。
+// 複数タブで同時プレイした場合など厳密な排他はできないが、
+// 個人利用のタイピング練習サイトなので許容する。
+async function addTypingScore(amount) {
+  if (!rankingClient || !amount) return;
+  try {
+    const { data: userData } = await rankingClient.auth.getUser();
+    const user = userData?.user;
+    if (!user) return; // 未ログイン時は紐付け先が無いので記録しない
+
+    const { data, error } = await rankingClient
+      .from("users")
+      .select("typing_score")
+      .eq("id", user.id)
+      .single();
+    if (error) throw error;
+
+    const current = data?.typing_score ?? 0;
+    const { error: updateError } = await rankingClient
+      .from("users")
+      .update({ typing_score: current + amount })
+      .eq("id", user.id);
+    if (updateError) throw updateError;
+  } catch (err) {
+    console.error("総打鍵数の記録に失敗しました", err);
+  }
+}
+
 // ラウンド終了後の即時ランキング表示・下部の「ジャンル別ランキング」表示、
 // どちらもこの関数を使う。durationでは絞らず、名前ごとの最高speedだけを
 // クライアント側で抜き出す(同じ人が複数の制限時間で打っていても、
