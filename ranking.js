@@ -194,6 +194,7 @@ const RANKING_CATEGORIES = [
     genres: [
       { genre: "maniawankatta", difficulty: "", label: "間に合わんかった鯖語録" },
       { genre: "kokugospi", difficulty: "", label: "国語SPI(有料)" },
+      { genre: "shakaikagaku", difficulty: "", label: "社会科学(有料)" },
     ],
   },
 ];
