@@ -426,6 +426,7 @@ function finishRound() {
     accuracy: Math.round(accuracy * 10) / 10,
     miss: state.roundStats.miss,
   });
+  addTypingScore(totalKeys);
 }
 
 // --- ランキング送信・表示 ---
