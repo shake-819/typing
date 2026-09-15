@@ -514,10 +514,12 @@ function handleKeydown(e) {
     startTicking();
   }
 
+  const prevUnitIndex = state.engine.currentUnitIndex;
   const result = state.engine.handleKey(key);
   if (result.result === "ignored") return;
 
-  const completedIdx = state.engine.currentUnitIndex - 1;
+  const newUnitIndex = state.engine.currentUnitIndex;
+  const lastCompletedIdx = newUnitIndex - 1;
 
   if (result.result === "miss") {
     state.roundStats.miss++;
@@ -531,14 +533,35 @@ function handleKeydown(e) {
 
   updateStatsDisplay();
 
+  // 「ん」のnを打った直後に次のモーラを打つ、のように1キー入力の内部処理で
+  // 前の単位が自動確定し現在位置が2つ以上進むことがある(結果がmissの場合も
+  // 含む)。unit-complete時に渡るcompletedTextは最後に確定した単位の分だけ
+  // なので、それより手前で飛び越えられた単位はここで代表パターンを使って
+  // 確定表示にしておく。これを怠ると、そのモーラの表示更新が一切走らないまま
+  // 次のキー入力まで残ってしまい、本来「現在位置」であるはずの文字の
+  // 青ハイライトが一時的に表示されない(=背景が途切れて見える)原因になる。
+  const skippedEnd = result.result === "unit-complete" ? lastCompletedIdx : lastCompletedIdx + 1;
+  for (let i = prevUnitIndex; i < skippedEnd; i++) {
+    const span = state.unitEls[i];
+    span.className = "romaji-done";
+    span.textContent = romajiDisplayText(state.engine.units[i].patterns[0]);
+  }
+
   if (result.result === "unit-complete") {
-    completeCurrentUnitSpan(completedIdx, result.completedText);
+    completeCurrentUnitSpan(lastCompletedIdx, result.completedText);
     if (state.engine.isDone) {
       state.roundStats.itemsDone++;
       setTimeout(nextItem, 150);
     }
   } else if (result.result === "progress") {
     updateCurrentUnitSpan();
+  } else if (result.result === "miss" && newUnitIndex > prevUnitIndex) {
+    // ミス判定であっても内部的に単位が進んでいれば、新しい現在位置を再描画する
+    if (!state.engine.isDone) {
+      updateCurrentUnitSpan();
+    } else {
+      keyboard.highlightExpected([]);
+    }
   }
 }
 
