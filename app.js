@@ -335,7 +335,7 @@ function nextItem() {
     els.imeInput.focus();
   } else {
     renderDisplayLine(item);
-    state.engine = new TypingEngine(item.kana, { caseSensitive: state.genre === "js" || state.genre === "sql" || state.genre === "vba" });
+    state.engine = new TypingEngine(item.kana, { caseSensitive: state.genre === "js" || state.genre === "sql" || state.genre === "vba" || state.genre === "shortcut" });
     buildRomajiLine();
   }
 }
@@ -348,6 +348,7 @@ function startRound() {
     : state.genre === "it" ? IT_SENTENCES
     : state.genre === "itpass" ? ITPASS_SENTENCES
     : state.genre === "kihonjoho" ? KIHONJOHO_SENTENCES
+    : state.genre === "shortcut" ? SHORTCUT_SENTENCES
     : state.genre === "email" ? EMAIL_SENTENCES
     : state.genre === "keigo" ? KEIGO_SENTENCES
     : state.genre === "numbers" ? NUMBERS_SENTENCES
